@@ -58,12 +58,13 @@ uint8 Touchscreen::transfer(uint8 data) {
     
     if(p > 0) {
       signed z1 = 0x000, z2 = 0xfff, r = 0xffff - p;
-      if(x > 0) {
-        z1 = 0xffffff / (0x1000 + 0x1000/x + 0x1000*(r - y)/x);
-        z2 = z1*(0x1000 + 0x1000*r/x) / 0x1000;
-        x /= 16;
-        y /= 16;
+      if(x > 0) {   // bleh, div-by-zero, just use medium pressure for now
+        z1 = 0xc00; //0xffffff / (0x1000 + 0x1000/x + 0x1000*(r - y)/x);
+        z2 = 0x400; //z1*(0x1000 + 0x1000*r/x) / 0x1000;
       }
+      x /= 16;
+      y /= 16;
+      
       // Without any pressure, there's no connection, and the input floats.
       // The measurements seem to return previous values to some extent.
       if(input == xpos)      last = x;      // y+ (along x-/x+ axis)
