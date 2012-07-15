@@ -287,11 +287,6 @@ void System::loadArm7Bios(const stream& stream) {
     arm7.bios.write(n, Word, stream.readl(4));
 }
 
-void System::saveArm7Bios(const stream& stream) {
-  for(unsigned n = 0; n < arm7.bios.size; n += 4)
-    stream.writel(arm7.bios.read(n, Word), 4);
-}
-
 
 void System::loadArm9Bios(const stream& stream) {
   delete[] arm9.bios.data;
@@ -301,11 +296,6 @@ void System::loadArm9Bios(const stream& stream) {
   
   for(unsigned n = 0; n < arm9.bios.size; n += 4)
     arm9.bios.write(n, Word, stream.readl(4));
-}
-
-void System::saveArm9Bios(const stream& stream) {
-  for(unsigned n = 0; n < arm9.bios.size; n += 4)
-    stream.writel(arm9.bios.read(n, Word), 4);
 }
 
 

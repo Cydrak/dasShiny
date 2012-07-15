@@ -216,8 +216,6 @@ void Interface::save() {
 }
 
 void Interface::save(unsigned id, const stream& memory) {
-  if(id == ARM7BIOS) return system.saveArm7Bios(memory);
-  if(id == ARM9BIOS) return system.saveArm9Bios(memory);
   if(id == Firmware) return system.saveFirmware(memory);
   if(id == Clock)    return system.saveRTC(memory);
 
@@ -279,7 +277,7 @@ void Interface::paletteUpdate() {
 }
 
 void Interface::videoRefresh(const uint32_t *data, unsigned pitch, unsigned width, unsigned height) {
-  uint32_t pixels[256*384];
+  static uint32_t pixels[256*384];
   
   for(unsigned y = 0; y < 384; y++) {
     const uint32 *src = &data[y*pitch/4];

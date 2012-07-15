@@ -9,7 +9,7 @@ void ARM7TDMI::Thread() { arm7.main(); }
 void ARM7TDMI::power() {
   // 33513982 MHz
   if(thread) co_delete(thread);
-  thread = co_create(65536 * sizeof(void*), ARM7TDMI::Thread);
+  thread = co_create(262144 * sizeof(void*), ARM7TDMI::Thread);
   
   vectorBase     = 0x00000000;
   bxWithLoadedPC = false;

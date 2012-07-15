@@ -11,7 +11,7 @@ void ARM946ES::Thread() { arm9.main(); }
 void ARM946ES::power() {
   // 2 * 33513982 MHz
   if(thread) co_delete(thread);
-  thread = co_create(65536 * sizeof(void*), ARM946ES::Thread);
+  thread = co_create(262144 * sizeof(void*), ARM946ES::Thread);
   
   vectorBase     = 0xffff0000;
   bxWithLoadedPC = true;

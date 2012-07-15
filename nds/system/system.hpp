@@ -216,9 +216,7 @@ struct System {
   void loadArm9Bios(const stream&);
   void loadFirmware(const stream&);
   void loadRTC(const stream&);
-
-  void saveArm7Bios(const stream&);
-  void saveArm9Bios(const stream&);
+  
   void saveFirmware(const stream&);
   void saveRTC(const stream&);
   
