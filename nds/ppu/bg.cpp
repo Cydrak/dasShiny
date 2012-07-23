@@ -236,7 +236,7 @@ void PPU::renderBitmapBg(unsigned no, unsigned mapDepth, unsigned mapW, unsigned
         uint16 data = system.vmap.bg(which, addr>>14)[addr] >> 8*(addr & 1);
         uint32 bgr;
         
-        if(mapDepth== 8) bgr = data &= 0xff;//bgPal[data &= 0xff];
+        if(mapDepth== 8) bgr = bgPal[data &= 0xff];
         if(mapDepth==16) bgr = (data<<3&62<<12)|(data<<2&62<<6)|(data<<1&62), data &= 0x8000;
         
         if(data) {
