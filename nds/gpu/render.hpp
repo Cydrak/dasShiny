@@ -55,7 +55,7 @@
     Texture *get(uint64 key);
     
     enum { tableSize = 1<<10 };
-    linear_vector<Texture*> table[tableSize];
+    vector<Texture*> table[tableSize];
     int size;
   } texCache;
   

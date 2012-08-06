@@ -16,7 +16,7 @@ template<class T> struct EventQueue_of {
   uint32 time;
   
   EventQueue_of(uint32 capacity) : size(0), time(0) {
-    //items.reserve(capacity+1);  // to simplify math, items[0] is unused
+    // Note: To simplify math, items[0] is unused
     for(unsigned n = 0; n < capacity+1; n++)
       items[n] = nullptr;
   }
@@ -103,7 +103,6 @@ template<class T> struct EventQueue_of {
   }
   
 //private:
-  //linear_vector<Elem*> items;
   Elem*  items[64];
   uint32 size;
   

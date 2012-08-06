@@ -170,7 +170,7 @@ bool GPU::addPoly(ClipSpaceVertex **v, unsigned numVerts, bool clip) {
     operator ClipSpaceVertex() const { return v; }
   };
   
-  linear_vector<Entry> list[2], *in = list+0, *out = list+1;
+  vector<Entry> list[2], *in = list+0, *out = list+1;
   
   for(unsigned i = 0; i < numVerts; i++)
     out->append({ *(v[i]) });
