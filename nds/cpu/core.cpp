@@ -142,11 +142,7 @@ ARMCore::SOut ARMCore::asr(uint32 rm, uint8 rs) {
   else        return {rs>31? (int32)rm>>31 : (int32)rm >>    rs,
                       rs>32?        rm     :        rm << 32-rs};
 }
-ARMCore::SOut ARMCore::ror(uint32 rm, uint8 rs) {
-  if(rs == 0)     return {rm, Cf};
-  if(!(rs &= 31)) return {rm, rm};  // rs == multiple of 32
-  else            return {rm << 32-rs | rm >> rs,  rm << 32-rs};
-}
+
 ARMCore::SOut ARMCore::rrx(uint32 rm) {
   return {(Cf & 1<<31) | rm >> 1,  rm << 31};
 }

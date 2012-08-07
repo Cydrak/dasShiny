@@ -49,8 +49,13 @@ struct ARMCore {
   alwaysinline SOut lsl(uint32 rm, uint8 rs);
   alwaysinline SOut lsr(uint32 rm, uint8 rs);
   alwaysinline SOut asr(uint32 rm, uint8 rs);
-  alwaysinline SOut ror(uint32 rm, uint8 rs);
   alwaysinline SOut rrx(uint32 rm);
+  
+  SOut ror(uint32 rm, uint8 rs) {
+    if(rs == 0)     return {rm, Cf};
+    if(!(rs &= 31)) return {rm, rm};  // rs == multiple of 32
+    else            return {rm << 32-rs | rm >> rs,  rm << 32-rs};
+  }
   
   alwaysinline SOut shiftImm(uint4 irm, uint2 opcode, uint5 rs);
   alwaysinline void alu(unsigned opcode, uint32& rd, uint32 rn, SOut rm);
