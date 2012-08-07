@@ -314,36 +314,7 @@ Interface::Interface() {
   
   // Slot 2 devices
   gamePak      = Device{ID::Device::GamePak,      1<<ID::Port::Slot2, "Game Pak"};
-  expansionPak = Device{ID::Device::ExpansionPak, 1<<ID::Port::Slot2, "Expansion Pak"};
-  rumblePak    = Device{ID::Device::RumblePak,    1<<ID::Port::Slot2, "Rumble Pak"};
-  guitarGrip   = Device{ID::Device::GuitarGrip,   1<<ID::Port::Slot2, "Guitar Grip"};
-  piano        = Device{ID::Device::Piano,        1<<ID::Port::Slot2, "Piano"};
-  paddle       = Device{ID::Device::Paddle,       1<<ID::Port::Slot2, "Paddle"};
   
-    guitarGrip.input.append({ID::GuitarGrip::Green,  0, "Green"});
-    guitarGrip.input.append({ID::GuitarGrip::Red,    0, "Red"});
-    guitarGrip.input.append({ID::GuitarGrip::Yellow, 0, "Yellow"});
-    guitarGrip.input.append({ID::GuitarGrip::Blue,   0, "Blue"});
-    guitarGrip.order.append(0,1,2,3);
-    
-    piano.input.append({ID::Piano::C,  0, "C"});
-    piano.input.append({ID::Piano::Cs, 0, "C#"});
-    piano.input.append({ID::Piano::D,  0, "D"});
-    piano.input.append({ID::Piano::Ds, 0, "D#"});
-    piano.input.append({ID::Piano::E,  0, "E"});
-    piano.input.append({ID::Piano::F,  0, "F"});
-    piano.input.append({ID::Piano::Fs, 0, "F#"});
-    piano.input.append({ID::Piano::G,  0, "G"});
-    piano.input.append({ID::Piano::Gs, 0, "G#"});
-    piano.input.append({ID::Piano::A,  0, "A"});
-    piano.input.append({ID::Piano::As, 0, "A#"});
-    piano.input.append({ID::Piano::B,  0, "B"});
-    piano.input.append({ID::Piano::Ch, 0, "C - high"});
-    piano.order.append(0,1,2,3,4,5,6,7,8,9,10,11,12);
-    
-    paddle.input.append({ID::Paddle::Rotation, 1, "Rotation"});
-    paddle.order.append(0);
-
   // Internal inputs
   buttons  = Device{ID::Device::BuiltIn, 1<<ID::Port::Buttons, "Built-in"};
   sensors  = Device{ID::Device::BuiltIn, 1<<ID::Port::Sensors, "Built-in"};
@@ -393,13 +364,8 @@ Interface::Interface() {
   device.append(sensors);
   device.append(touchpad);
   device.append(emptySlot);
-  device.append(gameCard);
-  device.append(gamePak);
-  device.append(expansionPak);
-  device.append(rumblePak);
-  device.append(guitarGrip);
-  device.append(piano);
-  device.append(paddle);
+  //device.append(gameCard);
+  //device.append(gamePak);
   
   for(auto &port : this->port)
     for(auto &device : this->device)

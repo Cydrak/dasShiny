@@ -11,7 +11,7 @@ struct ID {
   struct Device { enum{
     Empty=0, BuiltIn=0,
     /* Slot1 */ GameCard=1,
-    /* Slot2 */ GamePak=1, ExpansionPak, RumblePak, GuitarGrip, Piano, Paddle,
+    /* Slot2 */ GamePak=1,
   };};
   
   // Internal inputs
@@ -20,9 +20,7 @@ struct ID {
   struct Touchpad { enum{ X, Y, Pressure, PressureD }; };
   
   // Slot 2 device inputs
-  struct GuitarGrip { enum{ Green, Red, Yellow, Blue }; };
-  struct Piano { enum{ C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, Ch }; };
-  struct Paddle { enum{ Rotation }; };
+  // ...
 };
 
 struct Interface : Emulator::Interface {
