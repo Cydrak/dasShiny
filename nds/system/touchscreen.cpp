@@ -19,18 +19,18 @@ void Touchscreen::select(bool state) {
 bool Touchscreen::penDown() {
   if(powerMode == 3) return true;  // differs between NDS Lite and original?
   
+  signed NONE = -0x8000;
   signed x = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::X);
   signed y = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::Y);
   signed p = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::Pressure);
-  signed d = 0;//interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::PressureD);
+  signed d = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::PressureD);
   
-  if(y < 0) y = -0x8000;
-    
-  if(x == -0x8000 || y == -0x8000) {
+  if(y < 0) return 0;
+  if(x==NONE || y==NONE) {
     return 0;  // no touch input
   }
-  if(p == -0x8000)       // no analog pressure
-    p = d? 0 : -0x7fff;  //   use digital
+  if(p==NONE)  // no analog? use digital pen
+    p = !d? NONE : 0x7fff;
   
   return p > -0x7ff0;
 }
@@ -47,9 +47,9 @@ uint8 Touchscreen::transfer(uint8 data) {
     signed x = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::X);
     signed y = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::Y);
     signed p = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::Pressure);
-    signed d = 0;//interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::PressureD);
+    signed d = interface->inputPoll(ID::Port::Touchpad, 0, ID::Touchpad::PressureD);
     
-    if(p==NONE)            p = !d? -0x7fff : -0x3fff; // no analog? use digital pen
+    if(p==NONE)            p = !d? NONE : 0x7fff;     // no analog? use digital pen
     if(x==NONE || y==NONE) p = NONE;                  // check if pen offscreen
     if(y < 0)              p = NONE;                  // restrict to bottom screen
     

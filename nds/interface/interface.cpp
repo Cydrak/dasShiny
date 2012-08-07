@@ -378,9 +378,9 @@ Interface::Interface() {
     
     touchpad.input.append({ID::Touchpad::X, 2, "X position"});
     touchpad.input.append({ID::Touchpad::Y, 2, "Y position"});
-    touchpad.input.append({ID::Touchpad::Pressure, 2, "Pressure"});// (analog)"});
-    //touchpad.input.append({ID::Touchpad::PressureD, 0, "Pressure (digital)"});
-    touchpad.order.append(0,1,2);//,3);
+    touchpad.input.append({ID::Touchpad::Pressure, 2, "Pressure (analog)"});
+    touchpad.input.append({ID::Touchpad::PressureD, 0, "Pressure (digital)"});
+    touchpad.order.append(0,1,2,3);
   
   // Ports
   port.append({ID::Port::Buttons, "Buttons"});
