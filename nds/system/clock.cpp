@@ -204,7 +204,7 @@ void Clock::tickDay() {
   
   unsigned y = 10*(year>>4) + (year & 15);
   unsigned daysIn[32] = {  0,  // (invalid)
-    0x31,0x28+!(y % 4),        // Jan..Feb
+    0x31,0x28u + !(y % 4),     // Jan..Feb
     0x31,0x30,0x31,0x30,0x31,  // Mar..Jul
     0x31,0x30,   0,0,0,0,0,0,  // Aug..Sep (+ invalid months)
     0x31,0x30,0x31             // Oct..Dec

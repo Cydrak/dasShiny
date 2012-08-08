@@ -44,6 +44,7 @@ struct ARMCore {
     
     SOut(uint32 rm) : rm(rm) {}
     SOut(uint32 rm, int32 carry) : rm(rm), carry(carry) {}
+    SOut(uint32 rm, uint32 carry) : rm(rm), carry(carry) {}
     operator uint32() { return rm; }
   };
   alwaysinline SOut lsl(uint32 rm, uint8 rs);
@@ -54,7 +55,7 @@ struct ARMCore {
   SOut ror(uint32 rm, uint8 rs) {
     if(rs == 0)     return {rm, Cf};
     if(!(rs &= 31)) return {rm, rm};  // rs == multiple of 32
-    else            return {rm << 32-rs | rm >> rs,  rm << 32-rs};
+    else            return {rm << 32-rs | rm >> rs, rm << 32-rs};
   }
   
   alwaysinline SOut shiftImm(uint4 irm, uint2 opcode, uint5 rs);

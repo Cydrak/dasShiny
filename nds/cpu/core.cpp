@@ -128,23 +128,23 @@ void ARMCore::store(uint32 addr, uint32 size, uint32 data) {
 
 
 ARMCore::SOut ARMCore::lsl(uint32 rm, uint8 rs) {
-  if(rs == 0) return {rm, Cf};
+  if(rs == 0) return {rm,        Cf};
   else        return {rs>31? 0 : rm << rs,
                       rs>32? 0 : rm << rs-1};
 }
 ARMCore::SOut ARMCore::lsr(uint32 rm, uint8 rs) {
-  if(rs == 0) return {rm, Cf};
+  if(rs == 0) return {rm,        Cf};
   else        return {rs>31? 0 : rm >>    rs,
                       rs>32? 0 : rm << 32-rs};
 }
 ARMCore::SOut ARMCore::asr(uint32 rm, uint8 rs) {
-  if(rs == 0) return {rm, Cf};
-  else        return {rs>31? (int32)rm>>31 : (int32)rm >>    rs,
-                      rs>32?        rm     :        rm << 32-rs};
+  if(rs == 0) return {rm,                    Cf};
+  else return {uint32(rs>31? int32(rm)>>31 : int32(rm) >>    rs),
+                      rs>32? int32(rm)     : int32(rm) << 32-rs};
 }
 
 ARMCore::SOut ARMCore::rrx(uint32 rm) {
-  return {(Cf & 1<<31) | rm >> 1,  rm << 31};
+  return {(Cf & 1<<31) | rm >> 1, rm << 31};
 }
 
 ARMCore::SOut ARMCore::shiftImm(uint4 irm, uint2 opcode, uint5 rs) {

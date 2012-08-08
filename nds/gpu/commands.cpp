@@ -87,10 +87,10 @@ bool GPU::gxMatrixRestore() {
 }
 
 bool GPU::gxMatrixLoadIdentity() {
-  loadMatrix({ 0x1000,      0,      0,      0,
-                    0, 0x1000,      0,      0,
-                    0,      0, 0x1000,      0,
-                    0,      0,      0, 0x1000 });
+  loadMatrix({ 0x1000,  0,    0,    0,
+                  0, 0x1000,  0,    0,
+                  0,    0, 0x1000,  0,
+                  0,    0,    0, 0x1000 });
   return true;
 }
 
@@ -100,50 +100,55 @@ bool GPU::gxMatrixLoadIdentity() {
 bool GPU::gxMatrixLoad4x4() {
   if(numArgs < 16) return false;
   
-  loadMatrix({ args[ 0], args[ 4], args[ 8], args[12],
-               args[ 1], args[ 5], args[ 9], args[13],
-               args[ 2], args[ 6], args[10], args[14],
-               args[ 3], args[ 7], args[11], args[15] });
+  int32 *m = (int32*)args;
+  loadMatrix({ m[ 0], m[ 4], m[ 8], m[12],
+               m[ 1], m[ 5], m[ 9], m[13],
+               m[ 2], m[ 6], m[10], m[14],
+               m[ 3], m[ 7], m[11], m[15] });
   return true;
 }
 
 bool GPU::gxMatrixLoad4x3() {
   if(numArgs < 12) return false;
   
-  loadMatrix({ args[ 0], args[ 3], args[ 6], args[ 9],
-               args[ 1], args[ 4], args[ 7], args[10],
-               args[ 2], args[ 5], args[ 8], args[11],
-                      0,        0,        0,   0x1000 });
+  int32 *m = (int32*)args;
+  loadMatrix({ m[ 0], m[ 3], m[ 6], m[ 9],
+               m[ 1], m[ 4], m[ 7], m[10],
+               m[ 2], m[ 5], m[ 8], m[11],
+                 0,     0,     0,  0x1000 });
   return true;
 }
 
 bool GPU::gxMatrixMult4x4() {
   if(numArgs < 16) return false;
   
-  multMatrix({ args[ 0], args[ 4], args[ 8], args[12],
-               args[ 1], args[ 5], args[ 9], args[13],
-               args[ 2], args[ 6], args[10], args[14],
-               args[ 3], args[ 7], args[11], args[15] });
+  int32 *m = (int32*)args;
+  multMatrix({ m[ 0], m[ 4], m[ 8], m[12],
+               m[ 1], m[ 5], m[ 9], m[13],
+               m[ 2], m[ 6], m[10], m[14],
+               m[ 3], m[ 7], m[11], m[15] });
   return true;
 }
 
 bool GPU::gxMatrixMult4x3() {
   if(numArgs < 12) return false;
 
-  multMatrix({ args[ 0], args[ 3], args[ 6], args[ 9],
-               args[ 1], args[ 4], args[ 7], args[10],
-               args[ 2], args[ 5], args[ 8], args[11],
-                      0,        0,        0,   0x1000 });
+  int32 *m = (int32*)args;
+  multMatrix({ m[ 0], m[ 3], m[ 6], m[ 9],
+               m[ 1], m[ 4], m[ 7], m[10],
+               m[ 2], m[ 5], m[ 8], m[11],
+                 0,     0,     0,  0x1000 });
   return true;
 }
 
 bool GPU::gxMatrixRotate() {
   if(numArgs < 9) return false;
   
-  multMatrix({ args[0], args[3], args[6],      0,
-               args[1], args[4], args[7],      0,
-               args[2], args[5], args[8],      0,
-                     0,       0,       0, 0x1000 });
+  int32 *r = (int32*)args;
+  multMatrix({ r[0], r[3], r[6],  0,
+               r[1], r[4], r[7],  0,
+               r[2], r[5], r[8],  0,
+                0,    0,    0, 0x1000 });
   return true;
 }
 
@@ -155,10 +160,11 @@ bool GPU::gxMatrixScale() {
   if(matrixMode == mmLitView)
     matrixMode = mmModelView;
   
-  multMatrix({ args[0],       0,       0,      0,
-                     0, args[1],       0,      0,
-                     0,       0, args[2],      0,
-                     0,       0,       0, 0x1000 });
+  int32 *s = (int32*)args;
+  multMatrix({ s[0],  0,   0,   0,
+                 0, s[1],  0,   0,
+                 0,   0, s[2],  0,
+                 0,   0,   0, 0x1000 });
   matrixMode = prevMode;
   return true;
 }
@@ -166,10 +172,11 @@ bool GPU::gxMatrixScale() {
 bool GPU::gxMatrixTranslate() {
   if(numArgs < 3) return false;
 
-  multMatrix({  0x1000,       0,       0, args[0],
-                     0,  0x1000,       0, args[1],
-                     0,       0,  0x1000, args[2],
-                     0,       0,       0,  0x1000 });
+  int32 *t = (int32*)args;
+  multMatrix({ 0x1000,  0,    0,   t[0],
+                  0, 0x1000,  0,   t[1],
+                  0,    0, 0x1000, t[2],
+                  0,    0,    0, 0x1000 });
   return true;
 }
 

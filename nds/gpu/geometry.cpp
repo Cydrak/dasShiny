@@ -62,8 +62,8 @@ void GPU::submitVertex() {
 
 
 void GPU::submitTri(ClipSpaceVertex& v0, ClipSpaceVertex& v1, ClipSpaceVertex& v2) {
-  int32 out[] = { outcode(v0), outcode(v1), outcode(v2) };
-  int32 face  = facing(v0, v1, v2);
+  unsigned out[] = { outcode(v0), outcode(v1), outcode(v2) };
+  int32    face  = facing(v0, v1, v2);
   
   if(primitive.winding == 1)
     face = -face;  // this can happen when clipping triangle strips
@@ -85,8 +85,8 @@ void GPU::submitTri(ClipSpaceVertex& v0, ClipSpaceVertex& v1, ClipSpaceVertex& v
 }
 
 void GPU::submitQuad(ClipSpaceVertex& v0, ClipSpaceVertex& v1, ClipSpaceVertex& v2, ClipSpaceVertex& v3) {
-  int32 out[] = { outcode(v0), outcode(v1), outcode(v2), outcode(v3) };
-  int32 face  = facing(v0, v1, v2);
+  unsigned out[] = { outcode(v0), outcode(v1), outcode(v2), outcode(v3) };
+  int32    face  = facing(v0, v1, v2);
   
   bool front  = primitive.attributes & PS::drawFront;
   bool back   = primitive.attributes & PS::drawBack;
