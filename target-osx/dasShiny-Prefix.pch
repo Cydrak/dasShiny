@@ -1,0 +1,12 @@
+//
+// Prefix header for all source files of the 'dasShiny' target in the 'dasShiny' project
+//
+#define crash _apple_crash
+#define decimal _apple_decimal
+
+#ifdef __OBJC__
+  #import <Cocoa/Cocoa.h>
+#endif
+
+#undef decimal
+#undef crash

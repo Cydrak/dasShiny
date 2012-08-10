@@ -332,15 +332,17 @@ string arm(ARMCore* arm, uint32 i) {
   uint2 sh = i>>5;
   uint32 pc = arm->r[15] & ~3;
   
-  if(match(i, "1111 0101u101/// ..../")) return armMem(15, op, rd, rn, armOffset12(i));
-  if(match(i, "1111 0111u101/// ...0/")) return armMem(15, op, rd, rn, armShiftImm(rm, sh, i>>7));
-  if(match(i, "1111 101l..../// ..../")) return armBranch(14, 0, 1, pc + 4*int24(i));
-  if(match(i, "1111 1100000l/// ..../")) return armUndefined(i);
-  if(match(i, "1111 1100010l/// ..../")) return armCop_v5(15, i>>8, op, rd, rn, rm, i>>4);
-  if(match(i, "1111 110punwl/// ..../")) return armMemCop(15, i>>8, op, rd, rn, i);
-  if(match(i, "1111 1110..../// ..../")) return armCop(15, i>>8, op, rd, rn, rm, i>>4);
-  if(match(i, "1111 ......../// ..../")) return armUndefined(i);
-  
+  if(i >= 0xf0000000) {
+    if(match(i, "/ 0101u101/// ..../")) return armMem(15, op, rd, rn, armOffset12(i));
+    if(match(i, "/ 0111u101/// ...0/")) return armMem(15, op, rd, rn, armShiftImm(rm, sh, i>>7));
+    if(match(i, "/ 101l..../// ..../")) return armBranch(14, 0, 1, pc + 4*int24(i));
+    if(match(i, "/ 1100000l/// ..../")) return armUndefined(i);
+    if(match(i, "/ 1100010l/// ..../")) return armCop_v5(15, i>>8, op, rd, rn, rm, i>>4);
+    if(match(i, "/ 110punwl/// ..../")) return armMemCop(15, i>>8, op, rd, rn, i);
+    if(match(i, "/ 1110..../// ..../")) return armCop(15, i>>8, op, rd, rn, rm, i>>4);
+    
+    return armUndefined(i);
+  }
   if(match(i, ".... 00110r10/// ..../")) return armWritePsr(cc, i>>22,         rn, armImmed(i, rs));
   if(match(i, ".... 00010r10/// 0000/")) return armWritePsr(cc, i>>22,         rn, armRm(rm));
   if(match(i, ".... 00010r00/// 0000/")) return armReadPsr (cc, i>>22,     rd);

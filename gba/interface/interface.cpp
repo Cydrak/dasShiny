@@ -136,7 +136,7 @@ Interface::Interface() {
     this->device.append(device);
   }
 
-  port.append({0, "Device", {device[0]}});
+  port.append({0, "Device", vector<Device>{device[0]}});
 }
 
 }

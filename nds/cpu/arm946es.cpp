@@ -100,9 +100,9 @@ void ARM946ES::execARM() {
   if(i < 0xe0000000 && !evalCond(i>>28)) { r[15] += 4; return; }
   
   //                                                    opcode, sh,      Rd,  Rn,  Rm,  Rs
-  if(imatch("1111......../////")) {
-    if(imatch("111101x1u101/////")) { r[15] += 4; return; } // pld - reportedly NOP on DS?
-    if(imatch("1111101l..../////")) return armBranch  (1, 1, i<<2 | (i>>23 & 2));
+  if(i >= 0xf0000000) {
+    if(imatch("/ 01x1u101/////")) { r[15] += 4; return; } // pld - reportedly NOP on DS?
+    if(imatch("/ 101l..../////")) return armBranch  (1, 1, i<<2 | (i>>23 & 2));
     return undefined();
   }
   if(imatch("00x10xx0/////")) {

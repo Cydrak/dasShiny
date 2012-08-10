@@ -482,14 +482,14 @@ bool GPU::gxCullTest() {
   // Generate all 8 corners and outcodes
   int32 out[8];
   ClipSpaceVertex vertex[8] = {     // X Y Z
-    {{ a[0], a[1], a[2], 0x1000 }}, // l,b,n
-    {{ a[0], a[1], a[5], 0x1000 }}, // l,b,f
-    {{ a[0], a[4], a[2], 0x1000 }}, // l,t,n
-    {{ a[0], a[4], a[5], 0x1000 }}, // l,t,f
-    {{ a[3], a[1], a[2], 0x1000 }}, // r,b,n
-    {{ a[3], a[1], a[5], 0x1000 }}, // r,b,f
-    {{ a[3], a[4], a[2], 0x1000 }}, // r,t,n
-    {{ a[3], a[4], a[5], 0x1000 }}, // r,t,f
+    {Vector{ a[0], a[1], a[2], 0x1000 }}, // l,b,n
+    {Vector{ a[0], a[1], a[5], 0x1000 }}, // l,b,f
+    {Vector{ a[0], a[4], a[2], 0x1000 }}, // l,t,n
+    {Vector{ a[0], a[4], a[5], 0x1000 }}, // l,t,f
+    {Vector{ a[3], a[1], a[2], 0x1000 }}, // r,b,n
+    {Vector{ a[3], a[1], a[5], 0x1000 }}, // r,b,f
+    {Vector{ a[3], a[4], a[2], 0x1000 }}, // r,t,n
+    {Vector{ a[3], a[4], a[5], 0x1000 }}, // r,t,f
   };
   for(unsigned n = 0; n < 8; n++) {
     transform(clipMatrix, vertex[n].position);
