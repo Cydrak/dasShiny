@@ -1,7 +1,0 @@
-//
-// Prefix header for all source files of the 'dasShiny' target in the 'dasShiny' project
-//
-
-#ifdef __OBJC__
-  #import <Cocoa/Cocoa.h>
-#endif
