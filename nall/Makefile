@@ -19,9 +19,15 @@ ifeq ($(platform),)
   ifeq ($(uname),)
     platform := win
     delete = del $(subst /,\,$1)
+  else ifneq ($(findstring Windows,$(uname)),)
+    platform := win
+    delete = del $(subst /,\,$1)
   else ifneq ($(findstring CYGWIN,$(uname)),)
     platform := win
     delete = del $(subst /,\,$1)
+  else ifneq ($(findstring Msys,$(uname)),)
+    platform := win
+    delete = rm -f $1
   else ifneq ($(findstring Darwin,$(uname)),)
     platform := osx
     delete = rm -f $1

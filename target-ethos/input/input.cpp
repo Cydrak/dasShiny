@@ -86,7 +86,7 @@ int16_t DigitalInput::poll() {
     bool output = logic;
     switch(item.type) {
     case Input::Type::Button:      output = value;                    break;
-    case Input::Type::MouseButton: output = value & input.acquired(); break;
+    case Input::Type::MouseButton: output = value/* & input.acquired()*/; break;
     case Input::Type::HatUp:       output = value & Joypad::HatUp;    break;
     case Input::Type::HatDown:     output = value & Joypad::HatDown;  break;
     case Input::Type::HatLeft:     output = value & Joypad::HatLeft;  break;
