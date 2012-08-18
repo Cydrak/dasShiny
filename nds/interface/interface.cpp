@@ -105,9 +105,9 @@ void Interface::load(unsigned id, const string& manifest) {
         
         unsigned id = 0;
         if(auto card = slot1.card) {
-          if(type == "EEPROM") id = Slot1EEPROM, card->spi = new EEPROM(size, psize);
-          if(type == "Flash")  id = Slot1Flash,  card->spi = new Flash(size, chipId);
-          if(type == "FRAM")   id = Slot1FRAM,   card->spi = new FRAM(size);
+          if(type.iequals("eeprom")) id = Slot1EEPROM, card->spi = new EEPROM(size, psize);
+          if(type.iequals("flash"))  id = Slot1Flash,  card->spi = new Flash(size, chipId);
+          if(type.iequals("fram"))   id = Slot1FRAM,   card->spi = new FRAM(size);
         }
         if(id) {
           print("Loading slot-1 ",eslot1["save"]["type"].data," (", file, ").. ");
@@ -165,6 +165,7 @@ void Interface::load(unsigned id, const stream& memory, const string& markup) {
         card->size     = bit::round(size);
         
         memory.read(card->rom.data, card->rom.size);
+        card->sha256 = ::sha256(card->rom.data, card->rom.size);
         
         if(hash && hash != card->sha256) print("SHA256 mismatch.");
         else                             print("OK.");
@@ -207,9 +208,9 @@ void Interface::save() {
     
     print("Saving slot-1 ",type,".. ");
     
-    if(type == "EEPROM") interface->saveRequest(Slot1EEPROM, file);
-    if(type == "Flash")  interface->saveRequest(Slot1Flash, file);
-    if(type == "FRAM")   interface->saveRequest(Slot1FRAM, file);
+    if(type.iequals("eeprom")) interface->saveRequest(Slot1EEPROM, file);
+    if(type.iequals("flash"))  interface->saveRequest(Slot1Flash, file);
+    if(type.iequals("fram"))   interface->saveRequest(Slot1FRAM, file);
     
     print("\n");
   }
