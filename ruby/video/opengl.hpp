@@ -65,9 +65,10 @@ public:
 
   void refresh(bool smooth, unsigned inwidth, unsigned inheight, unsigned outwidth, unsigned outheight) {
     if(shader_support) {
-      glUseProgram(glprogram);
+      glUseProgram(glprogram *(fragmentshader || vertexshader));
+      
       GLint location;
-
+      
       float inputSize[2] = { (float)inwidth, (float)inheight };
       location = glGetUniformLocation(glprogram, "rubyInputSize");
       glUniform2fv(location, 1, inputSize);
