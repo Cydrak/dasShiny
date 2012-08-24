@@ -70,6 +70,10 @@ void ARM7TDMI::main() {
       store(0x02fffc80+n, Byte, system.firmware.read(0x3fe00+n, Byte));
     }
     
+    // Games compare this ID with the card's response
+    // to check whether it's still inserted and responding.
+    store(0x027ff800, Word, card->chipId);
+    
     // Check CRCs on firmware data and warn if incorrect
     uint8 *wifiData = &system.firmware.data[0x0002a];
     

@@ -150,9 +150,6 @@ void GameCard::command(uint64 command) {
     offset = command>>24 & 0x00000fff;
     block  = command>>24 & 0xfffff000;
     block &= size-1;
-    
-    // Once initialized, forbid reading the header and startup code.
-    if(block < 0x8000) block += 0x8000;
   }
   if((command>>56) == 0xb8) {
     state  = readId;
@@ -168,6 +165,9 @@ uint8 GameCard::read() {
     // However, reading from most (?) game cards wraps at 4K intervals.
     uint32 addr = (block + offset++) & size-1;
     offset &= 0xfff;
+
+    // Once initialized, forbid reading the header and encrypted area.
+    if(addr < 0x8000) addr = 0x8000 + (addr & 0x1ff);
     
     // Cards come in 2^n ROM sizes, however many images have the empty space
     // trimmed off. Homebrew images aren't even padded out! Rather than waste
@@ -179,7 +179,7 @@ uint8 GameCard::read() {
   if(state == readId) {
     // Need to ensure the matching ID is in RAM or games won't run
     //   (where does the firmware put it?)
-    r = 0;/**/chipId >> 8*offset++;
+    r = chipId >> 8*offset++;
     offset &= 3;
   }
   return r;
