@@ -409,12 +409,12 @@ void GPU::renderSpan(
       z = w<<7;
     
     // Unproject the interpolated values
-    int32 u = ((int64) i.u * w)/0x40000000;
-    int32 v = ((int64) i.v * w)/0x40000000;
+    int32 u = ((uint64) i.u * w)/0x40000000u;
+    int32 v = ((uint64) i.v * w)/0x40000000u;
     
-    int cr = min(63, (int64) i.r * w/0x4000000);
-    int cg = min(63, (int64) i.g * w/0x4000000);
-    int cb = min(63, (int64) i.b * w/0x4000000);
+    int cr = min(63, (uint64) i.r * w/0x4000000u);
+    int cg = min(63, (uint64) i.g * w/0x4000000u);
+    int cb = min(63, (uint64) i.b * w/0x4000000u);
     int ca = poly.p->alpha;
     
     i.u     += delta.u;     i.r += delta.r;
