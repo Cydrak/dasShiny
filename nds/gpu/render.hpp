@@ -2,6 +2,8 @@
   struct ActivePoly;
   union Interpolants;
   struct DrawList;
+  struct Pixel;
+  struct Texture;
   
   void updateDrawList(int y, DrawList& list, bool sorted);
   void setupPoly(ActivePoly& poly, Prim* prim, Vertex *vs, unsigned numVerts);
@@ -10,6 +12,10 @@
   
   void renderScanline();
   void renderDrawList(int y, DrawList& list, bool blend);
+  void renderSpan(
+    ActivePoly &poly, Texture *tex, bool blend,
+    Pixel *line, Interpolants &i, Interpolants &delta,
+    int x0, int x1, int px0, int px1, int nx0, int nx1);
   
   uint32 regRenderOptions();
   uint32 regRenderLoad();

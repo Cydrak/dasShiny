@@ -339,231 +339,8 @@ void GPU::renderDrawList(int y, DrawList& list, bool blend) {
       //   pass 1: calculate edge coverage (a==31 only)
       //   pass 2: if z <= bz, calculate [argbf]z (modulate, decal, toon, stencil)
       //   pass 3: do atest, ztest (less, equal), merge with line buffer (a==31, a<31)?
+      renderSpan(poly, tex, blend, line, i, delta, x0, x1, px0, px1, nx0, nx1);
       
-      for(unsigned x = x0; x <= x1; x++) {
-        int32 w = 0x80000000000ll / max(2ll, i.inv_w);
-        int32 z = i.z + 0x40000000; // z/w
-        
-        // Should find some way to justify this - <<7 was Selected for
-        // suitable fog in Mario Kart's Chocolate Mountain course..
-        if(renderList->depthUseW)
-          z = w<<7;
-        
-        // Unproject the interpolated values
-        int32 u = ((int64) i.u * w)/0x40000000;
-        int32 v = ((int64) i.v * w)/0x40000000;
-        
-        Vector color = {
-          min(63, (int64) i.r * w/0x4000000),
-          min(63, (int64) i.g * w/0x4000000),
-          min(63, (int64) i.b * w/0x4000000),
-          poly.p->alpha
-        };
-        
-        i.u     += delta.u;     i.r += delta.r;
-        i.v     += delta.v;     i.g += delta.g;
-        i.z     += delta.z;     i.b += delta.b;
-        i.inv_w += delta.inv_w;
-        
-        bool edge = false;
-        
-        if(blend == false) {
-          edge = x0 <= x && (x <= px0 || x <= nx0)
-            || (px1 <= x || nx1 <= x) && x <= x1
-            || x == x0 || x == x1;
-          
-          if(renderControl.edgeMode & RC::smooth) {
-            if(x == x0) color[3] = 31-(poly.left.x>>17 & 31);
-            if(x == x1) color[3] =    (poly.right.x>>17 & 31);
-          }
-        }
-        
-        Vector texColor = { 63, 63, 63, 31 };
-        if(tex) {
-          u = max(0, min(tex->width-1,  u & tex->umask));
-          v = max(0, min(tex->height-1, v & tex->vmask));
-          
-          uint32 abgr = tex->image[tex->width*v + u];
-          texColor[0] = 2*(abgr>> 0 & 31) + 1;
-          texColor[1] = 2*(abgr>> 5 & 31) + 1;
-          texColor[2] = 2*(abgr>>10 & 31) + 1;
-          texColor[3] = (abgr>>15);
-        }
-        
-        auto &px = line[x];
-        auto &above = px.a;
-        auto &below = px.b;
-        bool ztest_a = drawMode & Prim::zequal? z == px.az : z < px.az;
-        bool ztest_b = drawMode & Prim::zequal? z == px.bz : z < px.bz;
-        
-        if(shadeMode == Prim::stencil) {
-          if(stencilMode) {
-            // Draw to stencil buffer, not the screen
-            // Does texturing work here? Alpha, maybe?
-            if(ztest_a == false) {
-              px.flags |= Pixel::stencil;
-              px.sz     = px.az;
-            }
-            continue;
-          }
-          // Mask polygons using the stencil buffer
-          if(px.flags & Pixel::stencil) {
-            // Succeeded - force Z onto the fragment being shadowed
-            z = px.sz;
-            if(id == above.id) {
-              // FF IV surrounds characters in shadow volumes, and uses the ID
-              // to prevent self-shadowing. So technically this fragment is on
-              // top, yet the DS somehow draws it underneath the model. If not
-              // done this way, edge smoothing would clash with the shadow.
-              ztest_a = false;
-              ztest_b = true;
-              z = px.bz;
-            }
-          } else {
-            // Failed stencil test
-            continue;
-          }
-        }
-        
-        if(shadeMode == Prim::toon) {
-          // Look up shade based on the red channel
-          int a = color[3];
-          color = toonTable[renderControl.toonShading][color[0]/2 & 31];
-          color[0] /= 0x1000u;
-          color[1] /= 0x1000u;
-          color[2] /= 0x1000u;
-          color[3] = a;
-        }
-        
-        if(shadeMode == Prim::decal) {
-          color[0] += (texColor[0] - color[0]) * (texColor[3]+1) / 32u;
-          color[1] += (texColor[1] - color[1]) * (texColor[3]+1) / 32u;
-          color[2] += (texColor[2] - color[2]) * (texColor[3]+1) / 32u;
-        } else {
-          color[0] = color[0] * texColor[0] / 64u;
-          color[1] = color[1] * texColor[1] / 64u;
-          color[2] = color[2] * texColor[2] / 64u;
-          color[3] = (1 + color[3]) * texColor[3] / 32u;
-        }
-        
-        if(color[3] <= renderControl.alphaTest)
-          continue;
-        
-        if(blend) {
-          if(ztest_a) {
-            if(above.id == id) continue;
-            
-            if(!renderControl.alphaBlend) {
-              // Mario Kart uses this on the car selection screen. The alpha
-              // and coverage are still retained and used for PPU blending.
-              above.r = color[0];
-              above.g = color[1];
-              above.b = color[2];
-              above.a = max(color[3], px.a.a);
-              above.id = id;
-              
-              if(!(drawMode & Prim::fog)) px.flags &= ~Pixel::fog;
-              if(drawMode & Prim::zwrite) px.az = z;
-              continue;
-            }
-            
-            if(below.a /*not empty*/) {
-              if(below.id != above.id || color[3] == 31 || !(px.flags & Pixel::blends)) {
-                // Merge the top pixel down to make room
-                px.bz  += int64(px.az - px.bz) * (above.a + 1)/32u;
-                
-                below.r += (above.r - below.r) * (above.a + 1)/32u;
-                below.g += (above.g - below.g) * (above.a + 1)/32u;
-                below.b += (above.b - below.b) * (above.a + 1)/32u;
-                below.a  = max(above.a, below.a);
-                below.id = above.id;
-              }
-            } else {
-              // Bottom empty or top solid, simply push down
-              below = above;
-              px.bz = px.az;
-            }
-            // Then write the top one
-            above.r = color[0];
-            above.g = color[1];
-            above.b = color[2];
-            above.a = color[3];
-            above.id = id;
-            
-            // AND with previous fog bit
-            if(!(drawMode & Prim::fog)) px.flags &= ~Pixel::fog;
-            if(drawMode & Prim::zwrite) px.az = z;
-            
-            px.flags |= Pixel::blends;
-          }
-          else if(ztest_b) {
-            if(below.a /*not empty*/) {
-              if(below.id == id && color[3] < 31) continue;
-              
-              if(!renderControl.alphaBlend) {
-                if(drawMode & Prim::zwrite)
-                  px.bz  = z;
-                
-                below.r = color[0];
-                below.g = color[1];
-                below.b = color[2];
-              }
-              else {
-                // Blend into bottom pixel
-                if(drawMode & Prim::zwrite)
-                  px.bz  += int64(z - px.bz) * (color[3] + 1)/32u;
-                
-                below.r += (color[0] - below.r) * (color[3] + 1)/32u;
-                below.g += (color[1] - below.g) * (color[3] + 1)/32u;
-                below.b += (color[2] - below.b) * (color[3] + 1)/32u;
-              }
-              below.a  = max(color[3], below.a);
-              below.id = id;
-            } else {
-              // Bottom empty, simply replace
-              if(drawMode & Prim::zwrite)
-                px.bz = z;
-              
-              below.r = color[0];
-              below.g = color[1];
-              below.b = color[2];
-              below.a = color[3];
-              below.id = id;
-            }
-          }
-          continue;
-        }
-        
-        if(ztest_a) {
-          if(drawMode & Prim::fog) px.flags |=  Pixel::fog;
-          else                     px.flags &= ~Pixel::fog;
-          
-          // Push the top pixel down. Anything beneath is lost.
-          // Check first to avoid breaking backAlpha == 0.
-          if(above.a /*not empty*/) {
-            px.bz = px.az;
-            below = above;
-            below.a = 31;
-          }
-          above.r  = color[0];
-          above.g  = color[1];
-          above.b  = color[2];
-          above.a  = color[3];
-          above.id = id;
-          px.az    = z;
-          
-          if(edge) px.flags |= Pixel::edge;
-          else     px.flags &= ~Pixel::edge;
-        }
-        else if(ztest_b) {
-          below.r  = color[0];
-          below.g  = color[1];
-          below.b  = color[2];
-          below.a  = 31;
-          below.id = id;
-          px.bz    = z;
-        }
-      }
       poly.prev_lx = poly.left.x;
       poly.prev_rx = poly.right.x;
     }
@@ -573,6 +350,239 @@ void GPU::renderDrawList(int y, DrawList& list, bool blend) {
     for(unsigned j = 0; j < Interpolants::count; j++) {
       poly.lnext[j] += poly.dl_dv[j];
       poly.rnext[j] += poly.dr_dv[j];
+    }
+  }
+}
+
+
+void GPU::renderSpan(
+  ActivePoly &poly, Texture *tex, bool blend,
+  Pixel *line, Interpolants &i, Interpolants &delta,
+  int x0, int x1, int px0, int px1, int nx0, int nx1
+) {
+  uint8 id      = poly.p->id;
+  int drawMode  = poly.p->drawMode;
+  int shadeMode = drawMode & Prim::shadeMask;
+  
+  for(unsigned x = x0; x <= x1; x++) {
+    int32 w = 0x80000000000 / max(2ll, i.inv_w);
+    int32 z = i.z + 0x40000000; // z/w
+    
+    // Should find some way to justify this - <<7 was Selected for
+    // suitable fog in Mario Kart's Chocolate Mountain course..
+    if(renderList->depthUseW)
+      z = w<<7;
+    
+    // Unproject the interpolated values
+    int32 u = ((int64) i.u * w)/0x40000000;
+    int32 v = ((int64) i.v * w)/0x40000000;
+    
+    int cr = min(63, (int64) i.r * w/0x4000000);
+    int cg = min(63, (int64) i.g * w/0x4000000);
+    int cb = min(63, (int64) i.b * w/0x4000000);
+    int ca = poly.p->alpha;
+    
+    i.u     += delta.u;     i.r += delta.r;
+    i.v     += delta.v;     i.g += delta.g;
+    i.z     += delta.z;     i.b += delta.b;
+    i.inv_w += delta.inv_w;
+    
+    bool edge = false;
+    
+    if(blend == false) {
+      edge = x0 <= x && (x <= px0 || x <= nx0)
+        || (px1 <= x || nx1 <= x) && x <= x1
+        || x == x0 || x == x1;
+      
+      if(renderControl.edgeMode & RC::smooth) {
+        if(x == x0) ca = 31-(poly.left.x>>17 & 31);
+        if(x == x1) ca =    (poly.right.x>>17 & 31);
+      }
+    }
+    
+    int tr = 63, tg = 63, tb = 63, ta = 32;
+    if(tex) {
+      u = max(0, min(tex->width-1,  u & tex->umask));
+      v = max(0, min(tex->height-1, v & tex->vmask));
+      
+      uint32 abgr = tex->image[tex->width*v + u];
+      
+      tr = 2*(abgr>> 0 & 31)+1;
+      tg = 2*(abgr>> 5 & 31)+1;
+      tb = 2*(abgr>>10 & 31)+1;
+      ta =   (abgr>>15 & 31)+1;
+    }
+    
+    auto &px = line[x];
+    auto &above = px.a;
+    auto &below = px.b;
+    bool ztest_a = drawMode & Prim::zequal? z == px.az : z < px.az;
+    bool ztest_b = drawMode & Prim::zequal? z == px.bz : z < px.bz;
+    
+    if(shadeMode == Prim::stencil) {
+      if(stencilMode) {
+        // Draw to stencil buffer, not the screen
+        // Does texturing work here? Alpha, maybe?
+        if(ztest_a == false) {
+          px.flags |= Pixel::stencil;
+          px.sz     = px.az;
+        }
+        continue;
+      }
+      // Mask polygons using the stencil buffer
+      if(px.flags & Pixel::stencil) {
+        // Succeeded - force Z onto the fragment being shadowed
+        z = px.sz;
+        if(id == above.id) {
+          // FF IV surrounds characters in shadow volumes, and uses the ID
+          // to prevent self-shadowing. So technically this fragment is on
+          // top, yet the DS somehow draws it underneath the model. If not
+          // done this way, edge smoothing would clash with the shadow.
+          ztest_a = false;
+          ztest_b = true;
+          z = px.bz;
+        }
+      } else {
+        // Failed stencil test
+        continue;
+      }
+    }
+    
+    if(shadeMode == Prim::toon) {
+      // Look up shade based on the red channel
+      Vector color = toonTable[renderControl.toonShading][cr/2 & 31];
+      cr = color[0] / 0x1000u;
+      cg = color[1] / 0x1000u;
+      cb = color[2] / 0x1000u;
+    }
+    
+    if(shadeMode == Prim::decal) {
+      cr += (tr - cr) * ta/32u;
+      cg += (tg - cg) * ta/32u;
+      cb += (tb - cb) * ta/32u;
+    } else {
+      cr = cr * tr/64u;
+      cg = cg * tg/64u;
+      cb = cb * tb/64u;
+      ca = ca * ta/32u;
+    }
+    
+    if(ca <= renderControl.alphaTest)
+      continue;
+    
+    if(blend) {
+      if(ztest_a) {
+        if(above.id == id) continue;
+        
+        if(!renderControl.alphaBlend) {
+          // Mario Kart uses this on the car selection screen. The alpha
+          // and coverage are still retained and used for PPU blending.
+          above.r = cr;
+          above.g = cg;
+          above.b = cb;
+          above.a = max(ca, px.a.a);
+          above.id = id;
+          
+          if(!(drawMode & Prim::fog)) px.flags &= ~Pixel::fog;
+          if(drawMode & Prim::zwrite) px.az = z;
+          continue;
+        }
+        
+        if(below.a /*not empty*/) {
+          if(below.id != above.id || ca == 31 || !(px.flags & Pixel::blends)) {
+            // Merge the top pixel down to make room
+            px.bz  += int64(px.az - px.bz) * (above.a + 1)/32u;
+            
+            below.r += (above.r - below.r) * (above.a + 1)/32u;
+            below.g += (above.g - below.g) * (above.a + 1)/32u;
+            below.b += (above.b - below.b) * (above.a + 1)/32u;
+            below.a  = max(above.a, below.a);
+            below.id = above.id;
+          }
+        } else {
+          // Bottom empty or top solid, simply push down
+          below = above;
+          px.bz = px.az;
+        }
+        // Then write the top one
+        above.r = cr;
+        above.g = cg;
+        above.b = cb;
+        above.a = ca;
+        above.id = id;
+        
+        // AND with previous fog bit
+        if(!(drawMode & Prim::fog)) px.flags &= ~Pixel::fog;
+        if(drawMode & Prim::zwrite) px.az = z;
+        
+        px.flags |= Pixel::blends;
+      }
+      else if(ztest_b) {
+        if(below.a /*not empty*/) {
+          if(below.id == id && ca < 31) continue;
+          
+          if(!renderControl.alphaBlend) {
+            if(drawMode & Prim::zwrite)
+              px.bz  = z;
+            
+            below.r = cr;
+            below.g = cg;
+            below.b = cb;
+          }
+          else {
+            // Blend into bottom pixel
+            if(drawMode & Prim::zwrite)
+              px.bz  += int64(z - px.bz) * (ca + 1)/32u;
+            
+            below.r += (cr - below.r) * (ca + 1)/32u;
+            below.g += (cg - below.g) * (ca + 1)/32u;
+            below.b += (cb - below.b) * (ca + 1)/32u;
+          }
+          below.a  = max(ca, below.a);
+          below.id = id;
+        } else {
+          // Bottom empty, simply replace
+          if(drawMode & Prim::zwrite)
+            px.bz = z;
+          
+          below.r = cr;
+          below.g = cg;
+          below.b = cb;
+          below.a = ca;
+          below.id = id;
+        }
+      }
+      continue;
+    }
+    
+    if(ztest_a) {
+      if(drawMode & Prim::fog) px.flags |=  Pixel::fog;
+      else                     px.flags &= ~Pixel::fog;
+      
+      // Push the top pixel down. Anything beneath is lost.
+      // Check first to avoid breaking backAlpha == 0.
+      if(above.a /*not empty*/) {
+        px.bz = px.az;
+        below = above;
+        below.a = 31;
+      }
+      above.r  = cr;
+      above.g  = cg;
+      above.b  = cb;
+      above.a  = ca;
+      above.id = id;
+      px.az    = z;
+      
+      if(edge) px.flags |= Pixel::edge;
+      else     px.flags &= ~Pixel::edge;
+    }
+    else if(ztest_b) {
+      below.r  = cr;
+      below.g  = cg;
+      below.b  = cb;
+      below.a  = 31;
+      below.id = id;
+      px.bz    = z;
     }
   }
 }
