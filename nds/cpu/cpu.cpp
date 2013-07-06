@@ -154,6 +154,8 @@ void CPUCore::traceInsn() {
   if(mode != SYS && mode != USR) print(tracePsr(spsr()), "\n");
   else                           print("--------:--", "\n");
   
+  print(hex<8>(event.queue.time),"> ");
+  
   if(Tf) print(hex<8>(r[15] - 4), ": ", hex<4>(iexecute), "  ", disasm::thumb(this, iexecute), "\n");
   else   print(hex<8>(r[15] - 8), ": ", hex<8>(iexecute), "  ", disasm::arm(this, iexecute), "\n");
   
