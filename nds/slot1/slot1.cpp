@@ -42,6 +42,7 @@ void Slot1::power() {
 
 void Slot1::load(GameCard* card) {
   this->card = card;
+  card->power();
   if(card->spi)
     card->spi->power();
 }

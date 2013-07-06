@@ -189,6 +189,8 @@ uint32 ARM946ES::fetch(uint32 addr, uint32 size, bool s) {
   case 0x2: return system.ewram.read(addr % 0x400000, size);
   case 0x3: return system.swram[addr>>14 & 1].read(addr % 0x4000, size);
   case 0x6: return system.vmap.arm9[addr>>21 & 7][addr>>14 & 63].read(addr, size);
+  case 0x8:
+  case 0x9: return slot2.read(addr, size);
   }
   if(addr >= 0xffff0000) return bios.read(addr & bios.size-1, size);
   return 0;
@@ -221,6 +223,8 @@ uint32 ARM946ES::read(uint32 addr, uint32 size, bool s) {
   case 0x5: istep(h); return ppu[addr>>10 & 1].readPalette(addr % 0x400);
   case 0x6: istep(h); return system.vmap.arm9[addr>>21 & 7][addr>>14 & 63].read(addr, size);
   case 0x7: istep(w); return ppu[addr>>10 & 1].readOam(addr % 0x400);
+  case 0x8:
+  case 0x9: return slot2.read(addr, size);
   }
   istep(w); if(addr >= 0xffff0000) return bios.read(addr & bios.size-1, size);
   return 0;
@@ -249,6 +253,8 @@ void ARM946ES::write(uint32 addr, uint32 size, bool s, uint32 data) {
   case 0x5: istep(h); return ppu[addr>>10 & 1].writePalette(addr % 0x400, size, data);
   case 0x6: istep(h); return system.vmap.arm9[addr>>21 & 7][addr>>14 & 63].write(addr, size, data);
   case 0x7: istep(w); return ppu[addr>>10 & 1].writeOam(addr % 0x400, size, data);
+  case 0x8:
+  case 0x9: return slot2.write(addr, size, data);
   }
   istep(w);
 }

@@ -243,6 +243,7 @@ void Interface::unload() {
   
   save();
   delete slot1.unload();
+  delete slot2.unload();
 }
 
 void Interface::power() {

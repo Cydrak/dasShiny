@@ -55,6 +55,15 @@ uint16 crc16(uint8* data, unsigned size, uint16 initial) {
 
 void ARM7TDMI::main() {
   if(auto card = slot1.card) {
+    uint32 ndsCode = card->rom.read(0x0c, Word);
+    uint32 gbaCode = card->rom.read(0xac, Word);
+    
+    if(ndsCode == 0x23232323 && gbaCode == 0x53534150) { // ####, PASS
+      // For older homebrew, map the first 32MB of ROM into slot 2.
+      // The interface/importer will handle this once there's markup for it.
+      memorystream rom(card->rom.data, card->rom.size);
+      slot2.cart = new GameCart(rom, min(0x2000000, card->rom.size));
+    }
     // ARM7 BIOS and firmware should be doing this, but it requires
     // clock, card emulation and fancy things like that.
     uint32 arm9src   = card->rom.read(0x20, Word), arm7src   = card->rom.read(0x30, Word);
@@ -301,6 +310,10 @@ uint32 ARM7TDMI::read(uint32 addr, uint32 size, bool s) {
   case 0x48>>3: istep(1);                   return wifi.read(addr, size);
   case 0x60>>3:
   case 0x68>>3: istep(h); addr %= 0x040000; return system.vmap.arm7[addr>>14].read(addr, size);
+  case 0x80>>3:
+  case 0x88>>3:
+  case 0x90>>3:
+  case 0x98>>3: return slot2.read(addr, size);
   }
   istep(1);
   return 0;
@@ -328,10 +341,14 @@ void ARM7TDMI::write(uint32 addr, uint32 size, bool s, uint32 data) {
   case 0x60>>3:
   case 0x68>>3: istep(h); addr %= 0x040000; if(size > Byte) return system.vmap.arm7[addr>>14].write(addr, size, data);
     // STRB - special case, only works on ARM7
-    auto &page = system.vmap.arm7[addr>>14];
-    page[addr] &= addr & 1?        0x00ff :        0xff00;
-    page[addr] |= addr & 1? data & 0xff00 : data & 0x00ff;
-    return;
+    { auto &page = system.vmap.arm7[addr>>14];
+      page[addr] &= addr & 1?        0x00ff :        0xff00;
+      page[addr] |= addr & 1? data & 0xff00 : data & 0x00ff;
+      return; }
+  case 0x80>>3:
+  case 0x88>>3:
+  case 0x90>>3:
+  case 0x98>>3: return slot2.write(addr, size, data);
   }
   istep(1);
 }
