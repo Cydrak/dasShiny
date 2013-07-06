@@ -81,7 +81,9 @@ void ARM7TDMI::main() {
     
     // Games compare this ID with the card's response
     // to check whether it's still inserted and responding.
-    store(0x027ff800, Word, card->chipId);
+    store(0x027ff800, Word, card->chipId);  // unencrypted
+    store(0x027ff804, Word, card->chipId);  // secure mode?
+    store(0x027ffc00, Word, card->chipId);  // once booted
     
     // Check CRCs on firmware data and warn if incorrect
     uint8 *wifiData = &system.firmware.data[0x0002a];
@@ -125,8 +127,10 @@ void ARM7TDMI::main() {
           hex<4>(actual),"; expected ",hex<4>(expected),"\n");
     }
     
-    // Copy header into RAM
-    for(unsigned n = 0; n < 0x200; n += 4) {
+    // Copy header into RAM - only the 0x170 bytes in DS mode!
+    // (DSi cards have extra information - if it's copied to RAM then
+    //  titles such as Pokemon Black/White get confused and fail to boot.)
+    for(unsigned n = 0; n < 0x170; n += 4) {
       write(0x02fffe00+n, Word, 0, card->rom.read(n, Word));
     }
     
@@ -144,9 +148,8 @@ void ARM7TDMI::main() {
           write(arm7dest + n, Word, 0, card->rom.read(arm7src + n, Word));
       }
     }
-    // Should write the card's ROM ID to RAM too... where is it again?
-    arm7.booted = 0;
-    arm9.booted = 0;
+    arm7.booted = 1;
+    arm9.booted = 1;
     
     arm7.writeCpsr(0xdf, 0xf);
     arm7.branch(arm7entry & 1, arm7entry);
