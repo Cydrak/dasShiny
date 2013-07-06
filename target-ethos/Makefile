@@ -1,10 +1,3 @@
-processors := arm gsu hg51b lr35902 r6502 r65816 spc700 upd96050
-include processor/Makefile
-
-include fc/Makefile
-include sfc/Makefile
-include gb/Makefile
-include gba/Makefile
 include nds/Makefile
 name := dasShiny
 
@@ -83,7 +76,6 @@ else ifeq ($(platform),x)
 
 	mkdir -p ~/.config/$(name)
 	cp -R profile/* ~/.config/$(name)
-	cp data/cheats.xml ~/.config/$(name)/cheats.xml
 	chmod -R 777 ~/.config/$(name)
 endif
 
