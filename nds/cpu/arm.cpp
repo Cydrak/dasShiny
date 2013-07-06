@@ -70,7 +70,7 @@ void ARMCore::armDspMul(uint2 opcode, uint2 xy, uint4 ird, uint4 irn, uint4 irm,
     int16  rs = r[irs] >> 16*(xy>>1);
     uint32 rd = (int64) rm * rs >> 16;
     
-    if(xy & 1) {
+    if(~xy & 1) {
       uint32 ra = rd + rn;
       Qf |= oflow(ra,rd,rn);
       rd = ra;
@@ -160,8 +160,8 @@ void ARMCore::armMem(uint5 opcode, uint4 ird, uint4 irn, uint32 rm) {
   
   if((opcode & 2) || !(opcode & 0x10)) rn = update;
   
-  if(opcode & 1) rd = load(addr, opcode & 4? Byte : Word);  // ldr, ldrb
-  else           store(addr, opcode & 4? Byte : Word, rd);  // str, strb
+  if(~opcode & 1) return store(addr, opcode & 4? Byte : Word, rd); // str, strb
+  else            rd = load(addr, opcode & 4? Byte : Word);        // ldr, ldrb
   
   if(ird == 15) branch(r[15] & 1, r[15]);
 }
@@ -192,11 +192,11 @@ void ARMCore::armMem_v5(uint5 opcode, uint2 sh, uint4 ird, uint4 irn, uint32 rm)
   
   if((opcode & 2) || !(opcode & 0x10)) rn = update;
   
-  if(~opcode & 1) {
+//if(~opcode & 1) {
     if(sh == 3) { store(addr, Word, r[ird&~1]); store(addr+4, Word, r[ird|1]); } // strd
     if(sh == 2) { r[ird&~1] = load(addr, Word); r[ird|1] = load(addr+4, Word);   // ldrd
                   if(ird >= 14) branch(r[15] & 1, r[15]); }
-  }
+//}
 }
 
 void ARMCore::armBlock(uint5 opcode, uint4 irn, uint16 rlist) {
