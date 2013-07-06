@@ -1,9 +1,7 @@
 #include <nds/nds.hpp>
 #include "bit.hpp"
-#define imatch(bits)  ((i & force< Bit::mask(bits) >()) \
-                         == force< Bit::binary(bits) >())
-
-template<uint32 arg> static constexpr uint32 force() { return arg; }
+#define imatch(bits)  ((i & std::integral_constant<long, Bit::mask(bits) >()) \
+                         == std::integral_constant<long, Bit::binary(bits) >())
 
 namespace NintendoDS {
 

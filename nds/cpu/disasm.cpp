@@ -2,10 +2,8 @@
 namespace disasm {
 
 #define collect(i, bits)  (Bit::collect< Bit::field(bits) >((long)i))
-#define match(i, bits)    ((i & force< Bit::mask(bits) >()) \
-                             == force< Bit::binary(bits) >())
-
-template<uint32 arg> static constexpr uint32 force() { return arg; }
+#define match(i, bits)    ((i & std::integral_constant<long, Bit::mask(bits) >()) \
+                             == std::integral_constant<long, Bit::binary(bits) >())
 
 static string conds[] = {
   "eq","ne","cs","cc","mi","pl","vs","vc","hi","ls","ge","lt","gt","le","",""
