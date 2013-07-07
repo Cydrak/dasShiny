@@ -17,14 +17,20 @@ void Slot1::power() {
   }
   enable = true;
   
-  decryptLatency = 0;
-  responseLatency = 0;
-  xorData = 0;
-  xorCmds = 0;
+  nReset = 1;
+  speed = 0;
+  write = 0;
   dataReady = 0;
   blockSize = 0;
-  clock = 0;
-  secureMode = 0;
+  
+  bfAddClocks = 0;
+  bfLatency1 = 0;
+  bfLatency2 = 0;
+  
+  xorEnable = 0;
+  xorData = 0;
+  xorCmds = 0;
+  
   transferPending = 0;
   transferIrq = 0;
   transferLength = 0;
@@ -57,7 +63,7 @@ GameCard* Slot1::unload() {
 }
 
 
-void Slot1::startRomTransfer() {
+void Slot1::startBlockTransfer() {
   transferPending = true;
   transferLength = 0;
   
@@ -83,12 +89,10 @@ void Slot1::startRomTransfer() {
     arm->dmaTransfer(ch);
 }
 
-uint8 Slot1::readRom() {
-  uint8 data = 0xff;
-  
+uint8 Slot1::blockTransfer(uint8 data) {
   if(transferLength) {
     // Empty slot simply returns 0xff
-    if(card) data = card->read();
+    data = card? card->transfer(data) : 0xff;
     
     if(!--transferLength) {
       dataReady = false;
@@ -158,7 +162,7 @@ void GameCard::command(uint64 command) {
   }
 }
 
-uint8 GameCard::read() {
+uint8 GameCard::transfer(uint8 data) {
   uint8 r = 0xff;
   
   if(state == readData) {
@@ -166,7 +170,7 @@ uint8 GameCard::read() {
     // However, reading from most (?) game cards wraps at 4K intervals.
     uint32 addr = (block + offset++) & size-1;
     offset &= 0xfff;
-
+    
     // Once initialized, forbid reading the header and encrypted area.
     if(addr < 0x8000) addr = 0x8000 + (addr & 0x1ff);
     

@@ -18,29 +18,35 @@ struct Slot1 {
   void load(GameCard* card);
   GameCard* unload();
   
-  void startRomTransfer();
-  uint8 readRom();
-  uint8 spiTransfer(uint8 data);
+  void startBlockTransfer();
+  uint8 blockTransfer(uint8 data = 0);
+  uint8 spiTransfer(uint8 data = 0);
   
   GameCard *card;
   
   uint1  enable;
   
   // ROM interface
-  uint1  clock;           // 33MHz / {5, 8}
-  uint13 decryptLatency;  // clocks to wait for card to decrypt command
-  uint6  responseLatency; // clocks to wait for response (data buffering?)
-  uint2  xorData;         // XOR data received (2 bits?)
-  uint1  xorCmds;         // XOR commands sent
+  uint1  nReset;          // ??? written when changing seeds
+  uint1  speed;           // 33.5MHz / {5, 8} => {6.7MHz, 4.2MHz}
+  uint1  write;           // Send data to card instead of receiving
   uint1  dataReady;       // 32 bits buffered and ready in read port
   uint3  blockSize;       // {0, 512 bytes (usual), 1K-16K, 32 bits}
-  uint1  secureMode;      // ?
+  
+  uint1  bfAddClocks;     // Add extra clocks, during which data is discarded
+  uint13 bfLatency1;      //   This allows fast ROMs to run in Blowfish mode.
+  uint6  bfLatency2;      //   (Slow ROMs use a different flavor of kludge.)
+  
+  uint1  xorEnable;       // Enable XOR encryption with random stream
+  uint1  xorCmds;         //   XOR commands sent to the card
+  uint1  xorData;         //   XOR data sent and received
+  
   uint1  transferIrq;     // generate IRQ at end of block
   uint1  transferPending; // still more bytes to transfer?
-  uint32 transferLength;  // # bytes remaining
+  uint32 transferLength;  // count of bytes remaining
   
   uint64 command;         // latch holding 8 command bytes for next transfer
-  uint64 lfsr[2];         // registers used to obfuscate communication
+  uint64 lfsr[2];         // RNG used to obfuscate communication
   
   // Serial interface for EEPROM, flash, and peripheral access.
   // Each transfer writes and reads 8 bits, one bit per clock.
@@ -59,7 +65,7 @@ struct GameCard {
   
   virtual void power();
   virtual void command(uint64 command);
-  virtual uint8 read();
+  virtual uint8 transfer(uint8 data);
   
   int    state;    enum { idle, readData, readId };
   uint32 block;    // 4K block for reading

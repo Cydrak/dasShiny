@@ -298,29 +298,30 @@ void CPUCore::writeReg(uint32 addr, uint32 size, uint32 data) {
   case 0x010c: // Timer 3
     return regTimer(addr>>2 & 3, data, mask);
     
-  case 0x132: // Keypad interrupt
+  case 0x0132: // Keypad interrupt
     break;
     
   // SYNC, message control, send port
-  case 0x0180: return regSync(data, mask);
-  case 0x0184: return regMsgControl(data, mask);
-  case 0x0188: return regMsgSend(data);
+  case 0x000180: return regSync(data, mask);
+  case 0x000184: return regMsgControl(data, mask);
+  case 0x000188: return regMsgSend(data);
   
   // Slot 1
-  case 0x01a0: return regSlot1Control(data, mask);
-  case 0x01a4: return regSlot1RomControl(data, mask);
-  case 0x01a8: return regSlot1RomCommand(0, data, mask);
-  case 0x01ac: return regSlot1RomCommand(1, data, mask);
-  case 0x01b0: return regSlot1RomSeed(0, data, mask);
-  case 0x01b4: return regSlot1RomSeed(1, data, mask);
-  case 0x01b8: return regSlot1RomSeed(2, data, mask);
+  case 0x0001a0: return regSlot1Control(data, mask);
+  case 0x0001a4: return regSlot1RomControl(data, mask);
+  case 0x0001a8: return regSlot1RomCommand(0, data, mask);
+  case 0x0001ac: return regSlot1RomCommand(1, data, mask);
+  case 0x0001b0: return regSlot1RomSeed(0, data, mask);
+  case 0x0001b4: return regSlot1RomSeed(1, data, mask);
+  case 0x0001b8: return regSlot1RomSeed(2, data, mask);
+  case 0x100010: return regSlot1RomSend(data);
   
   // IME, IE, IF
-  case 0x0208: if(mask & 1) interrupt.gate = data & 1; return;
-  case 0x0210: interrupt.enable = interrupt.enable & ~mask | data; return;
-  case 0x0214: interrupt.flags &= ~data; return;
-  case 0x0218: return;  // IE: DSi bits
-  case 0x021c: return;  // IF: DSi bits
+  case 0x000208: if(mask & 1) interrupt.gate = data & 1; return;
+  case 0x000210: interrupt.enable = interrupt.enable & ~mask | data; return;
+  case 0x000214: interrupt.flags &= ~data; return;
+  case 0x000218: return;  // IE: DSi bits
+  case 0x00021c: return;  // IF: DSi bits
   }
   //print("w ",hex<8>(addr),":",size," = ",hex<8>(data),": unimplemented\n");
 }

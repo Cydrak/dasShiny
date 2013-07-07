@@ -7,11 +7,10 @@ uint32 CPUCore::regSlot1Control() {
 }
 
 uint32 CPUCore::regSlot1RomControl() {
-  return slot1.decryptLatency<<0 | slot1.xorData<<13
-       | slot1.responseLatency<<16 | slot1.xorCmds<<22
-       | slot1.dataReady<<23 | slot1.blockSize<<24
-       | slot1.clock<<27 | slot1.secureMode<<28
-       | 1<<29 | slot1.transferPending<<31;
+  return slot1.bfLatency1<<0 | slot1.xorData<<13 | slot1.xorEnable<<14
+       | slot1.bfLatency2<<16 | slot1.xorCmds<<22 | slot1.dataReady<<23
+       | slot1.blockSize<<24 | slot1.speed<<27 | slot1.bfAddClocks<<28
+       | slot1.nReset<<29 | slot1.write<<30 | slot1.transferPending<<31;
 }
 
 uint32 CPUCore::regSlot1RomCommand(unsigned index) {
@@ -26,11 +25,22 @@ uint32 CPUCore::regSlot1RomCommand(unsigned index) {
 
 uint32 CPUCore::regSlot1RomRecv() {
   uint32 data = 0;
-  data += slot1.readRom() << 0;
-  data += slot1.readRom() << 8;
-  data += slot1.readRom() << 16;
-  data += slot1.readRom() << 24;
+  if(slot1.write == false) {
+    data += slot1.blockTransfer() << 0;
+    data += slot1.blockTransfer() << 8;
+    data += slot1.blockTransfer() << 16;
+    data += slot1.blockTransfer() << 24;
+  }
   return data;
+}
+
+void CPUCore::regSlot1RomSend(uint32 data) {
+  if(slot1.write == true) {
+    slot1.blockTransfer(data>>0);
+    slot1.blockTransfer(data>>8);
+    slot1.blockTransfer(data>>16);
+    slot1.blockTransfer(data>>24);
+  }
 }
 
 void CPUCore::regSlot1Control(uint32 data, uint32 mask) {
@@ -60,25 +70,29 @@ void CPUCore::regSlot1Control(uint32 data, uint32 mask) {
 
 void CPUCore::regSlot1RomControl(uint32 data, uint32 mask) {
   if(mask & 0x00001fff) {
-    slot1.decryptLatency ^= (slot1.decryptLatency ^ data) & mask;
+    slot1.bfLatency1 ^= (slot1.bfLatency1 ^ data) & mask;
   }
   if(mask & 0x0000e000) {
-    slot1.xorData = data>>13;
+    slot1.xorData     = data>>13;
+    slot1.xorEnable   = data>>14;
     if(data & 1<<15) {
+      // Write-only; latches new RNG seeds from 0x040001b0..1bb
       slot1.lfsr[0] = config.xorSeeds[0];
       slot1.lfsr[1] = config.xorSeeds[1];
     }
   }
   if(mask & 0x00ff0000) {
-    slot1.responseLatency = data>>16;
-    slot1.xorCmds         = data>>22;
+    slot1.bfLatency2  = data>>16;
+    slot1.xorCmds     = data>>22;
   }
   if(mask & 0xff000000) {
-    slot1.blockSize = data>>24;
-    slot1.clock     = data>>27;
-    slot1.secureMode = data>>28;
+    slot1.blockSize   = data>>24;
+    slot1.speed       = data>>27;
+    slot1.bfAddClocks = data>>28;
+  //slot1.nReset      = data>>29;  // unsure if this does anything..
+    slot1.write       = data>>30;
     if(data & 1<<31)
-      slot1.startRomTransfer();
+      slot1.startBlockTransfer();
   }
 }
 

@@ -47,6 +47,7 @@ struct CPUCore : ARMCore {
   uint32 regSlot1RomControl();
   uint32 regSlot1RomCommand(unsigned index);
   uint32 regSlot1RomRecv();
+  void regSlot1RomSend(uint32 data);
   
   void regSlot1Control(uint32 data, uint32 mask);
   void regSlot1RomControl(uint32 data, uint32 mask);
