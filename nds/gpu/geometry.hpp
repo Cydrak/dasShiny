@@ -76,6 +76,7 @@
   uint32 attributes;
   uint32 texImage;
   uint16 texPalette;
+  Vector texCoord;
   ClipSpaceVertex vertex;
   
   struct {

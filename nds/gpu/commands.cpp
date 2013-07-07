@@ -211,16 +211,11 @@ bool GPU::gxNormal() {
   normal[3] = 0;
   
   if(primitive.texTransform == PS::ttNormal) {
-    // Used for environment mapping.
-    textureMatrix(0,3) = vertex.texCoord[0];
-    textureMatrix(1,3) = vertex.texCoord[1];
-    
+    // Used for environment mapping (shiny!).
     vertex.texCoord[0] = normal[0];
     vertex.texCoord[1] = normal[1];
     vertex.texCoord[2] = normal[2];
     vertex.texCoord[3] = 0x1000;
-    
-    transform(textureMatrix, vertex.texCoord);
   }
   
   transform(lightMatrix, normal);
@@ -250,20 +245,10 @@ bool GPU::gxNormal() {
 bool GPU::gxTexCoord() {
   if(numArgs < 1) return false;
 
-  vertex.texCoord[0] = 0x1000 * int16(args[0]>> 0);
-  vertex.texCoord[1] = 0x1000 * int16(args[0]>>16);
-  vertex.texCoord[2] = 0x1000;
-  vertex.texCoord[3] = 0x1000;
-  
-  // Affine texture transformations
-  if(primitive.texTransform == PS::ttTexCoord)
-    transform(textureMatrix, vertex.texCoord);
-  
-  //if(primitive.texTransform == PS::ttNormal || primitive.texTransform == PS::ttVertex) {
-  //  // Plug in U,V for environment/vertex mapping
-  //  textureMatrix(0,3) = vertex.texCoord[0];
-  //  textureMatrix(1,3) = vertex.texCoord[1];
-  //}
+  vertex.texCoord[0] = texCoord[0] = 0x1000 * int16(args[0]>> 0);
+  vertex.texCoord[1] = texCoord[1] = 0x1000 * int16(args[0]>>16);
+  vertex.texCoord[2] = texCoord[2] = 0x1000;  // yes, 1.0. Using 1/16 per
+  vertex.texCoord[3] = texCoord[3] = 0x1000;  // GBATEK gives odd results.
   return true;
 }
 

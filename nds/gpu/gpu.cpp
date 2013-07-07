@@ -59,6 +59,7 @@ void GPU::power() {
   for(auto &e : shininess) e = 0;
   
   normal          = Vector{0,0,0,0};
+  texCoord        = Vector{0,0,0,0x1000};
   vertex.position = Vector{0,0,0,0x1000};
   vertex.texCoord = Vector{0,0,0,0x1000};
   vertex.color    = Vector{0x3f000,0x3f000,0x3f000,0};

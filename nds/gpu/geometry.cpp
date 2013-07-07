@@ -1,22 +1,26 @@
 
 void GPU::submitVertex() {
   if(primitive.texTransform == PS::ttVertex) {
-    textureMatrix(0,3) = vertex.texCoord[0];
-    textureMatrix(1,3) = vertex.texCoord[1];
-    
     vertex.texCoord[0] = vertex.position[0];
     vertex.texCoord[1] = vertex.position[1];
     vertex.texCoord[2] = vertex.position[2];
     vertex.texCoord[3] = 0x1000;
-    
-    transform(textureMatrix, vertex.texCoord);
   }
   
-  auto &v = primitive.v;
   auto input = vertex;
   
+  if(primitive.texTransform) {
+    auto m = textureMatrix;
+    if(primitive.texTransform != PS::ttTexCoord) {
+      m(0,3) = texCoord[0];
+      m(1,3) = texCoord[1];
+    }
+    transform(m, input.texCoord);
+  }
   transform(clipMatrix, input.position);
-
+  
+  auto &v = primitive.v;
+  
   switch(primitive.type) {
   case PS::tris:
     v[primitive.size] = input;
