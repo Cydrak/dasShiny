@@ -10,6 +10,9 @@ struct WIFI {
   
   uint32 read(uint32 addr, uint32 size);
   void write(uint32 addr, uint32 size, uint32 data);
+
+  uint16 readReg(bool sideEffects, uint16 reg);
+  void writeReg(bool sideEffects, uint16 reg, uint16 data);
   
   uint1  powered;
   
@@ -31,6 +34,7 @@ struct WIFI {
   uint12 rxReadCounter;
   uint16 reg00a;
   
+  uint4  txRequest;
   uint12 txWritePos;
   uint12 txGapBegin, txGapSize;
   uint16 txBeacon;

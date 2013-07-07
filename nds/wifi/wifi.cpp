@@ -95,6 +95,7 @@ void WIFI::power() {
   txSlots[2]        = 0;    reg00a          = 0;
   txStatControl     = 0;
   txRetryLimit      = 0;
+  txRequest         = 0;
   
   reg1a0l = 0;
   reg1a0m = 0;
@@ -209,19 +210,11 @@ void WIFI::rfTransferBit() {
   }
 }
 
-uint32 WIFI::read(uint32 addr, uint32 size) {
-  if(addr & 0x4000)
-    return system.wxram.read(addr & 0x1fff, size);
-  
-  if(size==Word) { return read(addr&~2, Half)<<0
-                        | read(addr| 2, Half)<<16; }
-  //if(addr != 0x480015e && addr != 0x4800180)
-  //  print("wifi r ",hex<8>(addr),"\n");
-  
-  switch(addr & 0xffe) {
+uint16 WIFI::readReg(bool sideEffects, uint16 reg) {
+  switch(reg) {
   case 0x000: return 0xc340;  // chip ID
   case 0x004: return reg004;
-  case 0x006: return swMode<<0 | wifi.wepMode<<3;
+  case 0x006: return swMode<<0 | wepMode<<3;
   case 0x008: return txStatControl;
   case 0x00a: return reg00a;
   case 0x010: return interrupt.flags;
@@ -242,7 +235,7 @@ uint32 WIFI::read(uint32 addr, uint32 size) {
   case 0x034: return reg034;
   case 0x036: return bb.clock;
   case 0x038: return pm.txIdle;
-  case 0x03c: return pm.wakeRequest | pm.wakePending<<8 | pm.sleeping<<9;
+  case 0x03c: return pm.wakeRequest | pm.wakePending*0x102 | pm.sleeping<<9;
   case 0x040: return 0;//wifi.pm.;
   
   case 0x044: {
@@ -272,6 +265,8 @@ uint32 WIFI::read(uint32 addr, uint32 size) {
   case 0x088: return listenCount;
   case 0x08c: return beaconInterval;
   case 0x08e: return listenInterval;
+  
+  case 0x0b0: return txRequest | 1<<4;
   
   case 0x0bc: return preamble;
   
@@ -319,20 +314,12 @@ uint32 WIFI::read(uint32 addr, uint32 size) {
   case 0x254: return 0xeeee;
   case 0x290: return 0xffff;
   }
-  //print("r ",hex<8>(addr),": unimplemented\n");
+  //print("wifi r ",hex<3>(port),": unimplemented\n");
   return 0;
 }
 
-void WIFI::write(uint32 addr, uint32 size, uint32 data) {
-  if(size==Byte) return;
-  if(size==Word) { write(addr&~2, Half, data & 0xffff);
-                   write(addr| 2, Half, data >> 16); return; }
-  if(addr & 0x4000)
-    return system.wxram.write(addr & 0x1fff, Half, size);
-  
-  //print("wifi w ",hex<8>(addr)," : ",hex<4>(data),"\n");
-  
-  switch(addr & 0xffe) {
+void WIFI::writeReg(bool sideEffects, uint16 reg, uint16 data) {
+  switch(reg) {
   case 0x004:
     if((reg004 ^ data) & 1<<0) {
       if(data & 1) {
@@ -354,7 +341,7 @@ void WIFI::write(uint32 addr, uint32 size, uint32 data) {
       //reg278 = 0xf;
     }
     if(data & 1<<14) {
-      swMode = 0;
+      //swMode = 0;
       wepMode = 0;
       //txStatCnt = 0;
       //reg00a = 0;
@@ -385,9 +372,9 @@ void WIFI::write(uint32 addr, uint32 size, uint32 data) {
   case 0x006: swMode = data>>0; wepMode = data>>3; return;
   case 0x008: txStatControl = data; return;
   case 0x00a: reg00a = data; return;
-  case 0x21c: interrupt.flags |= data & ~0x400; return;
+  case 0x21c: interrupt.flags |= data & ~0x400; arm7.interrupt.flags |= interrupt.enable & interrupt.flags; return;
   case 0x010: interrupt.flags &= ~data; return;
-  case 0x012: interrupt.enable = data; return;
+  case 0x012: interrupt.enable = data; arm7.interrupt.flags |= interrupt.enable & interrupt.flags; return;
   
   case 0x018: macAddr[0] = data; macAddr[1] = data>>8; return;
   case 0x01a: macAddr[2] = data; macAddr[3] = data>>8; return;
@@ -404,8 +391,13 @@ void WIFI::write(uint32 addr, uint32 size, uint32 data) {
   case 0x034: reg034 = data; return;
   case 0x036: bb.clock = data; return;
   case 0x038: pm.txIdle = data; return;
-  case 0x03c: pm.wakeRequest = data>>1; return;
-  case 0x040: if(data & 1<<15) {
+  case 0x03c: pm.wakeRequest = data>>1;
+              if(pm.wakeRequest) {
+                interrupt.flags |= 1<<11;
+                arm7.interrupt.flags |= interrupt.enable & interrupt.flags;
+              }
+              return;
+  case 0x040: if((data & 1<<15) && !pm.wakePending) {
                 reg034 = 2;
                 pm.sleeping = data>>0;
               }
@@ -431,6 +423,9 @@ void WIFI::write(uint32 addr, uint32 size, uint32 data) {
   case 0x088: listenCount = data; return;
   case 0x08c: beaconInterval = data; return;
   case 0x08e: listenInterval = data; return;
+  
+  case 0x0ac: txRequest &= ~data; return; //txReset
+  case 0x0ae: txRequest |=  data; return; //txSet(...)
   
   case 0x0b4: return; //txBufReset
   case 0x0bc: preamble = data; return;
@@ -480,8 +475,57 @@ void WIFI::write(uint32 addr, uint32 size, uint32 data) {
   case 0x244: return;
   case 0x254: return;
   case 0x290: return;
+  
+  case 0x2d0:
+    pm.sleeping = 0;
+    pm.wakePending = 0; 
+    return;
   }
-  //print("w ",hex<8>(addr),": unimplemented\n");
+  //print("wifi w ",hex<3>(port),": unimplemented\n");
+}
+
+
+uint32 WIFI::read(uint32 addr, uint32 size) {
+  if(size==Word) {
+    uint32 data;
+    addr &= ~3;
+    data  = read(addr+0, Half);
+    data |= read(addr+2, Half);
+    return data;
+  }
+  bool sideEffects = true;
+  if(!wifi.powered)             return 0x00000000;
+  if((addr & 0x6000) == 0x2000) return 0xffffffff;  // ?
+  if((addr & 0x6000) == 0x4000) return system.wxram.read(addr & 0x1ffe, Half);
+  if((addr & 0x6000) == 0x6000) sideEffects = false;
+  
+  uint16 reg = addr & 0xffe;
+  uint16 data = readReg(sideEffects, reg);
+  
+  //if(reg != 0x15e && reg != 0x180)
+  //  print("wifi r ",hex<3>(reg)," : ",hex<4>(data),"\n");
+  
+  return data * 0x00010001;
+}
+
+void WIFI::write(uint32 addr, uint32 size, uint32 data) {
+  if(size==Byte) return;
+  if(size==Word) {
+    addr &= ~3;
+    write(addr+0, Half, data & 0xffff);
+    write(addr+2, Half, data >> 16);
+    return;
+  }
+  bool sideEffects = true;
+  if(!wifi.powered)             return;
+  if((addr & 0x6000) == 0x2000) return;
+  if((addr & 0x6000) == 0x4000) return system.wxram.write(addr & 0x1ffe, Half, data);
+  if((addr & 0x6000) == 0x6000) sideEffects = false;
+  
+  uint16 reg = addr & 0xffe;
+  //print("wifi w ",hex<3>(reg)," : ",hex<4>(data),"\n");
+  
+  writeReg(sideEffects, reg, data);
 }
 
 
