@@ -108,7 +108,7 @@ int16_t Interface::inputPoll(unsigned port, unsigned device, unsigned input) {
 }
 
 unsigned Interface::dipSettings(const Markup::Node &node) {
-  return dipSwitches->run(node);
+  return 0;
 }
 
 string Interface::path(unsigned group) {
@@ -116,11 +116,7 @@ string Interface::path(unsigned group) {
 }
 
 string Interface::server() {
-  return {
-    config->server.username, ":",
-    config->server.password, "@",
-    config->server.hostname
-  };
+  return "";
 }
 
 void Interface::notify(const string &text) {

@@ -38,17 +38,9 @@ struct Presentation : Window {
     CheckItem synchronizeVideo;
     CheckItem synchronizeAudio;
     CheckItem muteAudio;
-    Item configurationSettings;
-  Menu toolsMenu;
-    Menu saveStateMenu;
-      Item saveStateItem[5];
-    Menu loadStateMenu;
-      Item loadStateItem[5];
-    Separator stateMenuSeparator;
     Item resizeWindow;
-    Item stateManager;
-    Item cheatEditor;
     Item synchronizeTime;
+    Item configurationSettings;
 
   void synchronize();
   void setSystemName(const string &name);

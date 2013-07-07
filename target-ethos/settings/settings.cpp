@@ -4,7 +4,6 @@
 #include "input.cpp"
 #include "hotkey.cpp"
 #include "timing.cpp"
-#include "server.cpp"
 #include "advanced.cpp"
 Settings *settings = nullptr;
 
@@ -32,7 +31,6 @@ Settings::Settings() {
   panelList.append("Input");
   panelList.append("Hotkeys");
   panelList.append("Timing");
-  panelList.append("Server");
   panelList.append("Advanced");
 
   append(layout);
@@ -42,7 +40,6 @@ Settings::Settings() {
   append(*inputSettings);
   append(*hotkeySettings);
   append(*timingSettings);
-  append(*serverSettings);
   append(*advancedSettings);
 
   onClose = [&] {
@@ -63,7 +60,6 @@ void Settings::panelChanged() {
   inputSettings->setVisible(false);
   hotkeySettings->setVisible(false);
   timingSettings->setVisible(false);
-  serverSettings->setVisible(false);
   advancedSettings->setVisible(false);
   if(panelList.selected() == false) return;
 
@@ -73,7 +69,6 @@ void Settings::panelChanged() {
   case 2: return inputSettings->setVisible();
   case 3: return hotkeySettings->setVisible();
   case 4: return timingSettings->setVisible();
-  case 5: return serverSettings->setVisible();
-  case 6: return advancedSettings->setVisible();
+  case 5: return advancedSettings->setVisible();
   }
 }

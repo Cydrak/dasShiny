@@ -25,7 +25,6 @@ using namespace ruby;
 #include "window/window.hpp"
 #include "general/general.hpp"
 #include "settings/settings.hpp"
-#include "tools/tools.hpp"
 #include "resource/resource.hpp"
 
 Emulator::Interface& system();

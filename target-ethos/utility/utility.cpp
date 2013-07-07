@@ -99,55 +99,32 @@ void Utility::reset() {
 void Utility::load() {
   presentation->setTitle(system().title());
 
-  cheatEditor->load({pathname[0], "cheats.bml"});
-  stateManager->load({pathname[0], "dasShiny/states.bsa"}, 1);
-
   system().paletteUpdate();
   synchronizeDSP();
 
   resize();
-  cheatEditor->synchronize();
-  cheatEditor->refresh();
 }
 
 void Utility::unload() {
   if(program->active == nullptr) return;
   if(tracerEnable) tracerToggle();
 
-  cheatEditor->save({pathname[0], "cheats.bml"});
-  stateManager->save({pathname[0], "dasShiny/states.bsa"}, 1);
-
   system().unload();
   path.reset();
   pathname.reset();
-  cheatEditor->reset();
-  stateManager->reset();
   setInterface(nullptr);
 
   video.clear();
   audio.clear();
   presentation->setTitle({Emulator::Name, " ", Emulator::Version});
-  cheatDatabase->setVisible(false);
-  cheatEditor->setVisible(false);
-  stateManager->setVisible(false);
 }
 
 void Utility::saveState(unsigned slot) {
   if(program->active == nullptr) return;
-  serializer s = system().serialize();
-  if(s.size() == 0) return;
-  directory::create({pathname[0], "dasShiny/"});
-  if(file::write({pathname[0], "dasShiny/state-", slot, ".bsa"}, s.data(), s.size()) == false);
-  showMessage({"Save to slot ", slot});
 }
 
 void Utility::loadState(unsigned slot) {
   if(program->active == nullptr) return;
-  auto memory = file::read({pathname[0], "dasShiny/state-", slot, ".bsa"});
-  if(memory.size() == 0) return showMessage({"Unable to locate slot ", slot, " state"});
-  serializer s(memory.data(), memory.size());
-  if(system().unserialize(s) == false) return showMessage({"Slot ", slot, " state incompatible"});
-  showMessage({"Loaded from slot ", slot});
 }
 
 void Utility::tracerToggle() {

@@ -29,18 +29,8 @@ void Presentation::synchronize() {
   synchronizeAudio.setChecked(config->audio.synchronize);
   muteAudio.setChecked(config->audio.mute);
 
-  if(program->active == nullptr) {
-    toolsMenu.setVisible(false);
-  } else {
-    toolsMenu.setVisible(true);
-    saveStateMenu.setVisible(system().information.capability.states);
-    loadStateMenu.setVisible(system().information.capability.states);
-    stateMenuSeparator.setVisible(system().information.capability.states);
-    resizeWindow.setVisible(config->video.scaleMode != 2);
-    stateManager.setVisible(system().information.capability.states);
-    cheatEditor.setVisible(system().information.capability.cheats);
-    synchronizeTime.setVisible(system().rtc());
-  }
+  resizeWindow.setVisible(program->active && config->video.scaleMode != 2);
+  synchronizeTime.setVisible(program->active && system().rtc());
 }
 
 void Presentation::setSystemName(const string &name) {
@@ -75,14 +65,7 @@ Presentation::Presentation() : active(nullptr) {
     synchronizeAudio.setText("Synchronize Audio");
     muteAudio.setText("Mute Audio");
     configurationSettings.setText("Configuration ...");
-  toolsMenu.setText("Tools");
-    saveStateMenu.setText("Save State");
-      for(unsigned n = 0; n < 5; n++) saveStateItem[n].setText({"Slot ", 1 + n});
-    loadStateMenu.setText("Load State");
-      for(unsigned n = 0; n < 5; n++) loadStateItem[n].setText({"Slot ", 1 + n});
     resizeWindow.setText("Resize Window");
-    stateManager.setText("State Manager");
-    cheatEditor.setText("Cheat Editor");
     synchronizeTime.setText("Synchronize Time");
 
   append(loadMenu);
@@ -97,17 +80,11 @@ Presentation::Presentation() : active(nullptr) {
       for(auto &shader : shaderList) shaderMenu.append(*shader);
     settingsMenu.append(*new Separator);
     settingsMenu.append(synchronizeVideo, synchronizeAudio, muteAudio);
+    settingsMenu.append(resizeWindow, synchronizeTime);
     if(Intrinsics::platform() != Intrinsics::Platform::OSX) {
       settingsMenu.append(*new Separator);
       settingsMenu.append(configurationSettings);
     }
-  append(toolsMenu);
-    toolsMenu.append(saveStateMenu);
-      for(unsigned n = 0; n < 5; n++) saveStateMenu.append(saveStateItem[n]);
-    toolsMenu.append(loadStateMenu);
-      for(unsigned n = 0; n < 5; n++) loadStateMenu.append(loadStateItem[n]);
-    toolsMenu.append(stateMenuSeparator);
-    toolsMenu.append(resizeWindow, stateManager, cheatEditor, synchronizeTime);
 
   append(layout);
   layout.append(viewport, {0, 0, 1, 1});
@@ -140,11 +117,7 @@ Presentation::Presentation() : active(nullptr) {
   synchronizeAudio.onToggle = [&] { config->audio.synchronize = synchronizeAudio.checked(); utility->synchronizeRuby(); };
   muteAudio.onToggle = [&] { config->audio.mute = muteAudio.checked(); utility->synchronizeRuby(); };
   configurationSettings.onActivate = [&] { settings->setVisible(); settings->panelList.setFocused(); };
-  for(unsigned n = 0; n < 5; n++) saveStateItem[n].onActivate = [=] { utility->saveState(1 + n); };
-  for(unsigned n = 0; n < 5; n++) loadStateItem[n].onActivate = [=] { utility->loadState(1 + n); };
   resizeWindow.onActivate = [&] { utility->resize(true); };
-  stateManager.onActivate = [&] { ::stateManager->setVisible(); };
-  cheatEditor.onActivate = [&] { ::cheatEditor->setVisible(); };
   synchronizeTime.onActivate = [&] { system().rtcsync(); };
 
   synchronize();

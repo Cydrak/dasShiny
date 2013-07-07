@@ -1,5 +1,5 @@
 #include "ethos.hpp"
-#include "bootstrap.cpp"
+#include <nds/interface/interface.hpp>
 #include "resource/resource.cpp"
 
 Program *program = nullptr;
@@ -44,7 +44,11 @@ Program::Program(int argc, char **argv) {
   userpath = {nall::configpath(), "dasShiny/"};
   directory::create(userpath);
 
-  bootstrap();
+  interface = new Interface;
+  emulator.append(new NintendoDS::Interface);
+  for(auto &system : emulator)
+    system->bind = interface;
+
   active = nullptr;
 
   if(Intrinsics::platform() == Intrinsics::Platform::OSX) {
@@ -74,18 +78,13 @@ Program::Program(int argc, char **argv) {
   windowManager = new WindowManager;
   browser = new Browser;
   presentation = new Presentation;
-  dipSwitches = new DipSwitches;
   videoSettings = new VideoSettings;
   audioSettings = new AudioSettings;
   inputSettings = new InputSettings;
   hotkeySettings = new HotkeySettings;
   timingSettings = new TimingSettings;
-  serverSettings = new ServerSettings;
   advancedSettings = new AdvancedSettings;
   settings = new Settings;
-  cheatDatabase = new CheatDatabase;
-  cheatEditor = new CheatEditor;
-  stateManager = new StateManager;
   windowManager->loadGeometry();
   presentation->setVisible();
   utility->resize();

@@ -65,50 +65,6 @@ void InputManager::appendHotkeys() {
     };
   }
 
-  static unsigned activeSlot = 1;
-
-  {
-    auto hotkey = new HotkeyInput;
-    hotkey->name    = "Save State";
-    hotkey->mapping = "KB0::F5";
-
-    hotkey->press = [&] {
-      utility->saveState(activeSlot);
-    };
-  }
-
-  {
-    auto hotkey = new HotkeyInput;
-    hotkey->name    = "Load State";
-    hotkey->mapping = "KB0::F7";
-
-    hotkey->press = [&] {
-      utility->loadState(activeSlot);
-    };
-  }
-
-  {
-    auto hotkey = new HotkeyInput;
-    hotkey->name    = "Decrement Slot";
-    hotkey->mapping = "KB0::F6";
-
-    hotkey->press = [&] {
-      if(--activeSlot == 0) activeSlot = 5;
-      utility->showMessage({"Selected slot ", activeSlot});
-    };
-  }
-
-  {
-    auto hotkey = new HotkeyInput;
-    hotkey->name    = "Increment Slot";
-    hotkey->mapping = "KB0::F8";
-
-    hotkey->press = [&] {
-      if(++activeSlot == 6) activeSlot = 1;
-      utility->showMessage({"Selected slot ", activeSlot});
-    };
-  }
-
   {
     auto hotkey = new HotkeyInput;
     hotkey->name    = "Close Emulator";
