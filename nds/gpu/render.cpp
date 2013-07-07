@@ -434,6 +434,8 @@ void GPU::renderSpan(
         if(x == x1) ca =    (poly.right.x>>17 & 31);
       }
     }
+    // Wireframe draws only the edges (regardless of smoothing..)
+    if(poly.p->wire && !edge) continue;
     
     int tr = 63, tg = 63, tb = 63, ta = 32;
     if(tex) {

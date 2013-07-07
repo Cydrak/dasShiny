@@ -203,6 +203,7 @@ void GPU::swapBuffers() {
       }
       
       // Special case for wireframe... only edge pixels are drawn.
+      prims[n].wire = 0;
       if(prims[n].alpha == 0) {
         prims[n].alpha = 31;
         prims[n].wire = 1;
@@ -479,6 +480,8 @@ bool GPU::geomCommand(uint8 command) {
   case 0x34: return gxLightShininess();
   
   case 0x40: return gxBeginPrimitive();
+//case 0x41: return gxEndPrimitive();  // no-op, but games sometimes send this
+  
   case 0x50: return gxSwapBuffers();
   case 0x60: return gxViewport();
   
