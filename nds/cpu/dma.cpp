@@ -84,25 +84,26 @@ void CPUCore::regDmaControl(unsigned no, uint32 data, uint32 mask) {
     if(config.arm7)
       dma.trigger >>= 1;
     
-    if(dma.enable) {
-      if(previously == false) {
-        // Latch new settings
-        dma.source = dma.init.source;
-        dma.dest   = dma.init.dest;
-        dma.count  = dma.init.count;
-      }
-      if(dma.trigger == 0) {
-        dmaTransfer(no);
-      }
-      else if(dma.trigger == 7) {
-        // Geometry fifo - DMA display list
-        // - just do it right here since we lack timing
-        dmaTransfer(no);
-      }
-      //else {
+    // Some games out there do this to finish a background DMA:
+    //   DMA_CONTROL(n) &= ~0x3a000000;      <- trigger=0, repeat=0
+    //     (ie. from 0xaf.. to 0x85..)          enable=1 (unchanged)
+    // 
+    // Triggering in this case will corrupt the game's heap, especially
+    // if .dest/.count aren't reset. So only trigger on a 0->1 transition.
+    //
+    // (Alternately - it's possible we should trigger but use the new count.
+    //  Depending on how the logic is set up, both ways might make sense.)
+    if(dma.enable && previously == false) {
+      dma.source = dma.init.source;     // Latch new settings.
+      dma.dest   = dma.init.dest;       // Merely setting init.* will not
+      dma.count  = dma.init.count;      // affect an already-scheduled DMA.
+      
+           if(dma.trigger == 0) dmaTransfer(no);
+      else if(dma.trigger == 7) dmaTransfer(no);  // Geometry FIFO - quick hack
+      else {
       //  print(config.arm7?"arm7":"arm9",
       //    ": dma trigger ",dma.trigger,": unimplemented\n");
-      //}
+      }
     }
   }
 }
