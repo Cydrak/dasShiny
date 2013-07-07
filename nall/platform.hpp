@@ -54,8 +54,8 @@
 //================
 
 #if defined(_MSC_VER)
-  #define PATH_MAX  _MAX_PATH
-  #define va_copy(dest, src)  ((dest) = (src))
+  #define PATH_MAX _MAX_PATH
+  #define va_copy(dest, src) ((dest) = (src))
 #endif
 
 #if defined(_WIN32)
@@ -69,7 +69,7 @@
 //inline expansion
 //================
 
-#if defined(__GNUC__)
+#if defined(__clang__) || defined(__GNUC__)
   #define noinline      __attribute__((noinline))
   #define inline        inline
   #define alwaysinline  inline __attribute__((always_inline))
@@ -81,6 +81,16 @@
   #define noinline
   #define inline        inline
   #define alwaysinline  inline
+#endif
+
+//===========
+//unreachable
+//===========
+
+#if defined(__clang__) || defined(__GNUC__)
+  #define unreachable __builtin_unreachable()
+#else
+  #define unreachable throw
 #endif
 
 #endif

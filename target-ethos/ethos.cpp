@@ -2,43 +2,26 @@
 #include "bootstrap.cpp"
 #include "resource/resource.cpp"
 
-Application *application = nullptr;
+Program *program = nullptr;
 DSP dspaudio;
 
 Emulator::Interface& system() {
-  if(application->active == nullptr) throw;
-  return *application->active;
+  if(program->active == nullptr) throw;
+  return *program->active;
 }
 
-bool Application::focused() {
+bool Program::focused() {
   return config->input.focusAllow || presentation->focused();
 }
 
-string Application::path(const string &filename) {
+string Program::path(const string &filename, bool forWriting) {
   string path = {basepath, filename};
   if(file::exists(path)) return path;
   if(directory::exists(path)) return path;
   return {userpath, filename};
 }
 
-void Application::commandLineLoad(string pathname) {
-  pathname.transform("\\", "/");
-  pathname.rtrim<1>("/");
-  if(directory::exists(pathname) == false) return;
-
-  string type = extension(pathname);
-  pathname.append("/");
-
-  for(auto &emulator : this->emulator) {
-    for(auto &media : emulator->media) {
-      if(!media.load.empty()) continue;
-      if(type != media.type) continue;
-      return utility->loadMedia(emulator, media, pathname);
-    }
-  }
-}
-
-void Application::run() {
+void Program::main() {
   inputManager->poll();
   utility->updateStatus();
   autopause = config->input.focusPause && presentation->focused() == false;
@@ -52,9 +35,8 @@ void Application::run() {
   system().run();
 }
 
-Application::Application(int argc, char **argv) {
-  application = this;
-  quit = false;
+Program::Program(int argc, char **argv) {
+  program = this;
   pause = false;
   autopause = false;
 
@@ -65,16 +47,21 @@ Application::Application(int argc, char **argv) {
   bootstrap();
   active = nullptr;
 
-  if(Intrinsics::platform() == Intrinsics::Platform::Windows) {
+  if(Intrinsics::platform() == Intrinsics::Platform::OSX) {
+    normalFont = Font::sans(12);
+    boldFont = Font::sans(12, "Bold");
+    titleFont = Font::sans(20, "Bold");
+    monospaceFont = Font::monospace(8);
+  } else if(Intrinsics::platform() == Intrinsics::Platform::Windows) {
     normalFont = "Tahoma, 8";
     boldFont = "Tahoma, 8, Bold";
     titleFont = "Tahoma, 16, Bold";
     monospaceFont = "Lucida Console, 8";
   } else {
-    normalFont = "Sans, 8";
-    boldFont = "Sans, 8, Bold";
-    titleFont = "Sans, 16, Bold";
-    monospaceFont = "Liberation Mono, 8";
+    normalFont = Font::sans(8);
+    boldFont = Font::sans(8, "Bold");
+    titleFont = Font::sans(16, "Bold");
+    monospaceFont = Font::monospace(8);
   }
 
   config = new Configuration;
@@ -93,13 +80,15 @@ Application::Application(int argc, char **argv) {
   inputSettings = new InputSettings;
   hotkeySettings = new HotkeySettings;
   timingSettings = new TimingSettings;
-  driverSettings = new DriverSettings;
+  serverSettings = new ServerSettings;
+  advancedSettings = new AdvancedSettings;
   settings = new Settings;
   cheatDatabase = new CheatDatabase;
   cheatEditor = new CheatEditor;
   stateManager = new StateManager;
   windowManager->loadGeometry();
   presentation->setVisible();
+  utility->resize();
 
   video.set(Video::Handle, presentation->viewport.handle());
   if(!video.cap(Video::Depth) || !video.set(Video::Depth, depth = 30u)) {
@@ -120,12 +109,13 @@ Application::Application(int argc, char **argv) {
   utility->synchronizeRuby();
   utility->updateShader();
 
-  if(argc >= 2) commandLineLoad(argv[1]);
+  if(config->video.startFullScreen && argc >= 2) utility->toggleFullScreen();
+  Application::processEvents();
 
-  while(quit == false) {
-    OS::processEvents();
-    run();
-  }
+  if(argc >= 2) utility->loadMedia(argv[1]);
+
+  Application::main = {&Program::main, this};
+  Application::run();
 
   utility->unload();
   config->save();
@@ -134,21 +124,39 @@ Application::Application(int argc, char **argv) {
   windowManager->saveGeometry();
 }
 
-Application::~Application() {
-}
-
 int main(int argc, char **argv) {
   #if defined(PLATFORM_WINDOWS)
   utf8_args(argc, argv);
   #endif
 
-  //convert file to game folder; purify will then invoke dasShiny with game folder
-  if(argc == 2 && !directory::exists(argv[1]) && file::exists(argv[1])) {
-    invoke("purify", argv[1]);
-    return 0;
-  }
+  Application::setName("dasShiny");
 
-  new Application(argc, argv);
-  delete application;
+  Application::Cocoa::onActivate = [&] {
+    presentation->setVisible();
+  };
+
+  Application::Cocoa::onAbout = [&] {
+    MessageWindow()
+    .setTitle({"About ", Emulator::Name})
+    .setText({
+      Emulator::Name, " ", Emulator::Version, "\n",
+      "Author: ", Emulator::Author, "\n",
+      "License: ", Emulator::License, "\n",
+      "Website: ", Emulator::Website
+    })
+    .information();
+  };
+
+  Application::Cocoa::onPreferences = [&] {
+    settings->setVisible();
+    settings->panelList.setFocused();
+  };
+
+  Application::Cocoa::onQuit = [&] {
+    Application::quit();
+  };
+
+  new Program(argc, argv);
+  delete program;
   return 0;
 }

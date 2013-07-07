@@ -1,3 +1,5 @@
+namespace phoenix {
+
 #ifndef Button_SetImageList
   //MinGW/32-bit has painfully outdated platform headers ...
   typedef struct {
@@ -17,20 +19,20 @@
   #define Button_SetImageList(hwnd, pbuttonImagelist) (WINBOOL)SNDMSG((hwnd),BCM_SETIMAGELIST,0,(LPARAM)(pbuttonImagelist))
 #endif
 
-Geometry pButton::minimumGeometry() {
-  Geometry geometry = pFont::geometry(hfont, button.state.text);
+Size pButton::minimumSize() {
+  Size size = pFont::size(hfont, button.state.text);
 
   if(button.state.orientation == Orientation::Horizontal) {
-    geometry.width += button.state.image.width;
-    geometry.height = max(button.state.image.height, geometry.height);
+    size.width += button.state.image.width;
+    size.height = max(button.state.image.height, size.height);
   }
 
   if(button.state.orientation == Orientation::Vertical) {
-    geometry.width = max(button.state.image.width, geometry.width);
-    geometry.height += button.state.image.height;
+    size.width = max(button.state.image.width, size.width);
+    size.height += button.state.image.height;
   }
 
-  return { 0, 0, geometry.width + 20, geometry.height + 10 };
+  return {size.width + 20, size.height + 10};
 }
 
 void pButton::setImage(const image &image, Orientation orientation) {
@@ -63,10 +65,25 @@ void pButton::setImage(const image &image, Orientation orientation) {
     }
     Button_SetImageList(hwnd, &list);
   }
+
+  setText(button.state.text);  //update text to display nicely with image (or lack thereof)
 }
 
 void pButton::setText(const string &text) {
-  SetWindowText(hwnd, utf16_t(text));
+  if(text.empty()) {
+    //bitmaps will not show up if text is empty
+    SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) |  BS_BITMAP);
+  } else {
+    //text will not show up if BS_BITMAP is set
+    SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) & ~BS_BITMAP);
+  }
+
+  if(OsVersion() >= WindowsVista && button.state.image.empty() == false && text.empty() == false) {
+    //Vista+ does not add spacing between the icon and text; causing them to run into each other
+    SetWindowText(hwnd, utf16_t(string{" ", text}));
+  } else {
+    SetWindowText(hwnd, utf16_t(text));
+  }
 }
 
 void pButton::constructor() {
@@ -74,7 +91,7 @@ void pButton::constructor() {
   SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&button);
   setDefaultFont();
   setImage(button.state.image, button.state.orientation);
-  setText(button.state.text);
+//setText(button.state.text);  //called by setImage();
   synchronize();
 }
 
@@ -87,4 +104,6 @@ void pButton::destructor() {
 void pButton::orphan() {
   destructor();
   constructor();
+}
+
 }

@@ -11,6 +11,7 @@ struct Configuration : configuration {
     unsigned saturation;
     unsigned gamma;
     unsigned luminance;
+    bool startFullScreen;
   } video;
 
   struct Audio {
@@ -33,6 +34,12 @@ struct Configuration : configuration {
     double video;
     double audio;
   } timing;
+
+  struct Server {
+    string hostname;
+    string username;
+    string password;
+  } server;
 
   void load();
   void save();

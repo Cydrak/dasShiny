@@ -17,78 +17,71 @@ bool Interface::loaded() {
   return true;
 }
 
+string Interface::title() {
+  return gameTitle;
+}
+
 unsigned Interface::group(unsigned id) {
-  if(id == ARM7BIOS  || id == ARM9BIOS)    return 0;
-  if(id == Firmware  || id == Clock)       return 0;
+  if(id == SystemManifest)                 return System;
+  if(id == ARM7BIOS  || id == ARM9BIOS)    return System;
+  if(id == Firmware  || id == Clock)       return System;
   
-  if(id == Slot1ROM  || id == Slot1EEPROM) return 1;
-  if(id == Slot1FRAM || id == Slot1Flash)  return 1;
+  if(id == GameManifest)                   return NintendoDS;
+  if(id == Slot1ROM  || id == Slot1EEPROM) return NintendoDS;
+  if(id == Slot1FRAM || id == Slot1Flash)  return NintendoDS;
   
-  if(id == Slot2ROM  || id == Slot2RAM)    return 2;
-  if(id == Slot2SRAM || id == Slot2EEPROM) return 2;
-  if(id == Slot2FRAM || id == Slot2Flash)  return 2;
-  
+  if(id == Slot2ROM  || id == Slot2RAM)    return NintendoDS;
+  if(id == Slot2SRAM || id == Slot2EEPROM) return NintendoDS;
+  if(id == Slot2FRAM || id == Slot2Flash)  return NintendoDS;
   return 0;
 }
 
-void Interface::load(unsigned id, const string& manifest) {
-  //print(manifest,"\n");
-  string syspath = interface->path(System);
-  
+void Interface::load(unsigned id) {
   if(id == NintendoDS) {
-    gameManifest = manifest;
-    systemManifest.readfile({syspath, "manifest.xml"});
-    XML::Document sysdoc(systemManifest);
+    interface->loadRequest(SystemManifest, "manifest.xml");
+    interface->loadRequest(GameManifest,   "manifest.xml");
     
-    if(!sysdoc["system"].exists()) {
-      interface->notify("manifest.xml not found");
-    }
-    else {
-      auto &sys = sysdoc["system"];
+    if(systemManifest) {
+      auto elem = Markup::Document(systemManifest);
       
-      string arm7BiosFile = sys["arm7"]["bios"]["data"].data;
-      string arm9BiosFile = sys["arm9"]["bios"]["data"].data;
-      string firmwareFile = sys["flash"]["data"].data;
-      string clockXmlFile = sys["rtc"]["data"].data;
+      interface->loadRequest(ARM7BIOS, elem["system/arm7/bios/data"].data);
+      interface->loadRequest(ARM9BIOS, elem["system/arm9/bios/data"].data);
+      interface->loadRequest(Firmware, elem["system/flash/data"].data);
+      interface->loadRequest(Clock,    elem["system/rtc/data"].data);
       
-      if(!file::exists({syspath, arm7BiosFile})) interface->notify("arm7 bios not found");
-      if(!file::exists({syspath, arm9BiosFile})) interface->notify("arm9 bios not found");
-      if(!file::exists({syspath, firmwareFile})) interface->notify("firmware not found");
-      
-      interface->loadRequest(ARM7BIOS, arm7BiosFile);
-      interface->loadRequest(ARM9BIOS, arm9BiosFile);
-      interface->loadRequest(Firmware, firmwareFile);
-      interface->loadRequest(Clock,    clockXmlFile);
+      if(!arm7.bios.size)       interface->notify("ARM7 ROM not found.");
+      if(!arm9.bios.size)       interface->notify("ARM9 ROM not found.");
+      if(!system.firmware.size) interface->notify("System firmware not found.");
+    } else {
+      interface->notify("System manifest not found.");
     }
     
-    if(gameManifest == "") {
-      // Default to 1GB ROM with no save. Since GameCard does bounds-check,
-      // we only allocate enough to hold the stream passed in.
-      gameManifest =
-        "<cartridge>"
-          "<slot1>"
-            "<rom name=\"rom\" size=\"0x40000000\" />"
-          "</slot1>"
-        "</cartridge>";
+    gameTitle = basename(notdir(interface->path(NintendoDS).rtrim("/")));
+    
+    if(!gameManifest) {
+      // Default to 1GB ROM with no save. Since GameCard bounds-checks,
+      // we need only allocate enough to hold the stream passed in.
+      gameManifest = "<cartridge><slot1>\n"
+                     "  <rom name=\"rom\" size=\"0x40000000\" />\n"
+                     "</slot1><cartridge>\n";
     }
     
-    // <cartridge>
-    XML::Document document(gameManifest);
+    // <cartridge title=..>
+    XML::Document elem(gameManifest);
+    if(elem.error != "") { print(elem.error,"\n"); return; }
     
-    //if(document.error != "") {
-    //  print(document.error,"\n");
-    //  return;
-    //}
+    if(auto title = elem["cartridge/title"].data)
+      gameTitle = title;
     
-    auto &eslot1 = document["cartridge"]["slot1"];
+    const auto &eslot1 = elem["cartridge/slot1"];
     
     // <slot1>
     if(eslot1.exists()) {
       // <rom name=.. id=.. size=.. sha256=.. />
       if(eslot1["rom"].exists()) {
-        string file   = string(eslot1["rom"]["name"].data);
-        uint32 size   = numeral(eslot1["rom"]["size"].data);
-        uint32 chipId = numeral(eslot1["rom"]["id"].data);
+        string file   = string(eslot1["rom/name"].data);
+        uint32 size   = numeral(eslot1["rom/size"].data);
+        uint32 chipId = numeral(eslot1["rom/id"].data);
         
         print("Loading slot-1 ROM (", file, ").. ");
         slot1.load(new GameCard(chipId));
@@ -97,11 +90,11 @@ void Interface::load(unsigned id, const string& manifest) {
       }
       // <save name=.. type=EEPROM,FRAM,Flash size=.. [page|id=..] />
       if(eslot1["save"].exists()) {
-        string file   = string(eslot1["save"]["name"].data);
-        string type   = string(eslot1["save"]["type"].data);
-        uint32 size   = numeral(eslot1["save"]["size"].data);
-        uint32 psize  = numeral(eslot1["save"]["page"].data);  // EEPROM only
-        uint32 chipId = numeral(eslot1["save"]["id"].data);    // Flash only
+        string file   = string(eslot1["save/name"].data);
+        string type   = string(eslot1["save/type"].data);
+        uint32 size   = numeral(eslot1["save/size"].data);
+        uint32 psize  = numeral(eslot1["save/page"].data);  // EEPROM only
+        uint32 chipId = numeral(eslot1["save/id"].data);    // Flash only
         
         unsigned id = 0;
         if(auto card = slot1.card) {
@@ -110,7 +103,7 @@ void Interface::load(unsigned id, const string& manifest) {
           if(type.iequals("fram"))   id = Slot1FRAM,   card->spi = new FRAM(size);
         }
         if(id) {
-          print("Loading slot-1 ",eslot1["save"]["type"].data," (", file, ").. ");
+          print("Loading slot-1 ",eslot1["save/type"].data," (", file, ").. ");
           interface->loadRequest(id, file);
           print("\n");
         }
@@ -143,20 +136,22 @@ void Interface::load(unsigned id, const string& manifest) {
   }
 }
 
-void Interface::load(unsigned id, const stream& memory, const string& markup) {
+void Interface::load(unsigned id, const stream& memory) {
+  if(id == SystemManifest) { systemManifest = memory.text(); return; }
+  if(id == GameManifest)   { gameManifest   = memory.text(); return; }
+
   if(id == ARM7BIOS) return system.loadArm7Bios(memory);
   if(id == ARM9BIOS) return system.loadArm9Bios(memory);
   if(id == Firmware) return system.loadFirmware(memory);
   if(id == Clock)    return system.loadRTC(memory);
   
-  XML::Document document(gameManifest);
-  
-  auto &eslot1 = document["cartridge"]["slot1"];
+  XML::Document elem(gameManifest);
+  const auto &eslot1 = elem["cartridge/slot1"];
   
   if(eslot1.exists()) {
     if(eslot1["rom"].exists() && id == Slot1ROM) {
-      string hash = string(eslot1["rom"]["sha256"].data);
-      uint32 size = numeral(eslot1["rom"]["size"].data);
+      string hash = string(eslot1["rom/sha256"].data);
+      uint32 size = numeral(eslot1["rom/size"].data);
       
       if(auto card = slot1.card) {
         delete card->rom.data;
@@ -172,7 +167,7 @@ void Interface::load(unsigned id, const stream& memory, const string& markup) {
       }
     }
     if(eslot1["save"].exists() && slot1.card && (id==Slot1EEPROM || id==Slot1Flash || id==Slot1FRAM)) {
-      uint32 size = numeral(eslot1["save"]["size"].data);
+      uint32 size = numeral(eslot1["save/size"].data);
       
       if(auto save = slot1.card->spi) {
         if(auto irport = dynamic_cast<IRPort*>(save))
@@ -190,21 +185,18 @@ void Interface::load(unsigned id, const stream& memory, const string& markup) {
 
 
 void Interface::save() {
-  XML::Document sysdoc(systemManifest);
-  
-  if(sysdoc["system"].exists()) {
-    auto &sys = sysdoc["system"];
-    
-    interface->saveRequest(Firmware, sys["flash"]["data"].data);
-    interface->saveRequest(Clock,    sys["rtc"]["data"].data);
+  if(systemManifest) {
+    XML::Document elem(systemManifest);
+    interface->saveRequest(Firmware, elem["system/flash/data"].data);
+    interface->saveRequest(Clock,    elem["system/rtc/data"].data);
   }
   
-  XML::Document document(gameManifest);
-  auto &eslot1 = document["cartridge"]["slot1"];
+  XML::Document elem(gameManifest);
+  const auto &eslot1 = elem["cartridge/slot1"];
   
   if(eslot1.exists() && eslot1["save"].exists()) {
-    string file = eslot1["save"]["name"].data;
-    string type = eslot1["save"]["type"].data;
+    string file = eslot1["save/name"].data;
+    string type = eslot1["save/type"].data;
     
     print("Saving slot-1 ",type,".. ");
     
@@ -304,11 +296,9 @@ Interface::Interface() {
   information.capability.states = false;
   information.capability.cheats = false;
   
-  media.append({NintendoDS, "Nintendo DS", "nds"});
-  //media.append({NintendoDS, "Nintendo DS", "nds", "Menu"});
+  media.append({NintendoDS, "Nintendo DS", "nds", true});
   
   // Input devices and ports
-  
   emptySlot    = Device{ID::Device::Empty, 1<<ID::Port::Slot1|1<<ID::Port::Slot2, "Empty"};
   
   // Slot 1 devices

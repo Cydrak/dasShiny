@@ -1,3 +1,5 @@
+namespace phoenix {
+
 void pHexEdit::setColumns(unsigned columns) {
 }
 
@@ -14,4 +16,9 @@ void pHexEdit::update() {
 }
 
 void pHexEdit::constructor() {
+}
+
+void pHexEdit::destructor() {
+}
+
 }

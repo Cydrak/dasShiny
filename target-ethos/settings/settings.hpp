@@ -11,7 +11,8 @@ struct SettingsLayout : HorizontalLayout {
 #include "input.hpp"
 #include "hotkey.hpp"
 #include "timing.hpp"
-#include "driver.hpp"
+#include "server.hpp"
+#include "advanced.hpp"
 
 struct Settings : Window {
   HorizontalLayout layout;

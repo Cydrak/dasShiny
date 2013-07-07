@@ -1,3 +1,5 @@
+namespace phoenix {
+
 void pTextEdit::setCursorPosition(unsigned position) {
 }
 
@@ -14,4 +16,9 @@ string pTextEdit::text() {
 }
 
 void pTextEdit::constructor() {
+}
+
+void pTextEdit::destructor() {
+}
+
 }

@@ -1,3 +1,5 @@
+namespace phoenix {
+
 void pListView::append(const lstring &text) {
 }
 
@@ -46,4 +48,9 @@ void pListView::setSelection(unsigned row) {
 }
 
 void pListView::constructor() {
+}
+
+void pListView::destructor() {
+}
+
 }

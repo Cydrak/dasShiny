@@ -28,18 +28,20 @@ struct Interface : Emulator::Interface {
   double audioFrequency();
 
   enum {
-    System,
-    NintendoDS,
+    System, SystemManifest,
+    NintendoDS, GameManifest,
     
     ARM7BIOS, ARM9BIOS, Firmware, Clock,
     Slot1ROM, Slot1EEPROM, Slot1FRAM, Slot1Flash,
     Slot2ROM, Slot2RAM, Slot2SRAM, Slot2EEPROM, Slot2FRAM, Slot2Flash,
   };
   
+  string title();
+  
   unsigned group(unsigned id);
   bool loaded();
-  void load(unsigned id, const string &manifest = "");
-  void load(unsigned id, const stream &memory, const string &markup = "");
+  void load(unsigned id);
+  void load(unsigned id, const stream &memory);
   void save();
   void save(unsigned id, const stream &memory);
   void unload();
@@ -58,6 +60,7 @@ struct Interface : Emulator::Interface {
 private:
   string systemManifest;
   string gameManifest;
+  string gameTitle;
   
   vector<Device> device;
   

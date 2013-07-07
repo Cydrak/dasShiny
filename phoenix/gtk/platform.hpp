@@ -1,3 +1,16 @@
+namespace phoenix {
+
+struct pApplication {
+  static XlibDisplay *display;
+
+  static void run();
+  static bool pendingEvents();
+  static void processEvents();
+  static void quit();
+
+  static void initialize();
+};
+
 struct Settings : public configuration {
   bidirectional_map<Keyboard::Scancode, unsigned> keymap;
 
@@ -20,11 +33,14 @@ struct pLayout;
 struct pWidget;
 
 struct pFont {
-  static Geometry geometry(const string &description, const string &text);
+  static string serif(unsigned size, string style);
+  static string sans(unsigned size, string style);
+  static string monospace(unsigned size, string style);
+  static Size size(const string &font, const string &text);
 
   static PangoFontDescription* create(const string &description);
   static void free(PangoFontDescription *font);
-  static Geometry geometry(PangoFontDescription *font, const string &text);
+  static Size size(PangoFontDescription *font, const string &text);
   static void setFont(GtkWidget *widget, const string &font);
   static void setFont(GtkWidget *widget, gpointer font);
 };
@@ -46,17 +62,17 @@ struct pMouse {
   static bool pressed(Mouse::Button button);
 };
 
-struct pDialogWindow {
-  static string fileOpen(Window &parent, const string &path, const lstring &filter);
-  static string fileSave(Window &parent, const string &path, const lstring &filter);
-  static string folderSelect(Window &parent, const string &path);
+struct pBrowserWindow {
+  static string directory(BrowserWindow::State &state);
+  static string open(BrowserWindow::State &state);
+  static string save(BrowserWindow::State &state);
 };
 
 struct pMessageWindow {
-  static MessageWindow::Response information(Window &parent, const string &text, MessageWindow::Buttons buttons);
-  static MessageWindow::Response question(Window &parent, const string &text, MessageWindow::Buttons buttons);
-  static MessageWindow::Response warning(Window &parent, const string &text, MessageWindow::Buttons buttons);
-  static MessageWindow::Response critical(Window &parent, const string &text, MessageWindow::Buttons buttons);
+  static MessageWindow::Response error(MessageWindow::State &state);
+  static MessageWindow::Response information(MessageWindow::State &state);
+  static MessageWindow::Response question(MessageWindow::State &state);
+  static MessageWindow::Response warning(MessageWindow::State &state);
 };
 
 struct pObject {
@@ -68,18 +84,6 @@ struct pObject {
 
   void constructor() {}
   void destructor() {}
-};
-
-struct pOS : public pObject {
-  static XlibDisplay *display;
-  static Font defaultFont;
-
-  static void main();
-  static bool pendingEvents();
-  static void processEvents();
-  static void quit();
-
-  static void initialize();
 };
 
 struct pTimer : public pObject {
@@ -231,7 +235,8 @@ struct pWidget : public pSizable {
   GtkWidget *gtkWidget;
 
   bool enabled();
-  virtual Geometry minimumGeometry();
+  virtual bool focused();
+  virtual Size minimumSize();
   void setEnabled(bool enabled);
   virtual void setFocused();
   virtual void setFont(const string &font);
@@ -247,7 +252,7 @@ struct pWidget : public pSizable {
 struct pButton : public pWidget {
   Button &button;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   void setImage(const image &image, Orientation orientation);
   void setText(const string &text);
 
@@ -270,33 +275,33 @@ struct pCanvas : public pWidget {
   void orphan();
 };
 
-struct pCheckBox : public pWidget {
-  CheckBox &checkBox;
+struct pCheckButton : public pWidget {
+  CheckButton &checkButton;
 
   bool checked();
-  Geometry minimumGeometry();
+  Size minimumSize();
   void setChecked(bool checked);
   void setText(const string &text);
 
-  pCheckBox(CheckBox &checkBox) : pWidget(checkBox), checkBox(checkBox) {}
+  pCheckButton(CheckButton &checkButton) : pWidget(checkButton), checkButton(checkButton) {}
   void constructor();
   void destructor();
   void orphan();
 };
 
-struct pComboBox : public pWidget {
-  ComboBox &comboBox;
+struct pComboButton : public pWidget {
+  ComboButton &comboButton;
   unsigned itemCounter;
 
   void append(const string &text);
   void modify(unsigned row, const string &text);
   void remove(unsigned row);
-  Geometry minimumGeometry();
+  Size minimumSize();
   void reset();
   unsigned selection();
   void setSelection(unsigned row);
 
-  pComboBox(ComboBox &comboBox) : pWidget(comboBox), comboBox(comboBox) {}
+  pComboButton(ComboButton &comboButton) : pWidget(comboButton), comboButton(comboButton) {}
   void constructor();
   void destructor();
   void orphan();
@@ -310,6 +315,7 @@ struct pHexEdit : public pWidget {
   GtkTextBuffer *textBuffer;
   GtkTextMark *textCursor;
 
+  bool focused();
   void setColumns(unsigned columns);
   void setLength(unsigned length);
   void setOffset(unsigned offset);
@@ -328,15 +334,15 @@ struct pHexEdit : public pWidget {
   void updateScroll();
 };
 
-struct pHorizontalScrollBar : public pWidget {
-  HorizontalScrollBar &horizontalScrollBar;
+struct pHorizontalScroller : public pWidget {
+  HorizontalScroller &horizontalScroller;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   unsigned position();
   void setLength(unsigned length);
   void setPosition(unsigned position);
 
-  pHorizontalScrollBar(HorizontalScrollBar &horizontalScrollBar) : pWidget(horizontalScrollBar), horizontalScrollBar(horizontalScrollBar) {}
+  pHorizontalScroller(HorizontalScroller &horizontalScroller) : pWidget(horizontalScroller), horizontalScroller(horizontalScroller) {}
   void constructor();
   void destructor();
   void orphan();
@@ -345,7 +351,7 @@ struct pHorizontalScrollBar : public pWidget {
 struct pHorizontalSlider : public pWidget {
   HorizontalSlider &horizontalSlider;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   unsigned position();
   void setLength(unsigned length);
   void setPosition(unsigned position);
@@ -359,7 +365,7 @@ struct pHorizontalSlider : public pWidget {
 struct pLabel : public pWidget {
   Label &label;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   void setText(const string &text);
 
   pLabel(Label &label) : pWidget(label), label(label) {}
@@ -371,7 +377,7 @@ struct pLabel : public pWidget {
 struct pLineEdit : public pWidget {
   LineEdit &lineEdit;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   void setEditable(bool editable);
   void setText(const string &text);
   string text();
@@ -388,7 +394,7 @@ struct pListView : public pWidget {
   GtkListStore *store;
   struct GtkColumn {
     GtkTreeViewColumn *column;
-    GtkCellRenderer *checkbox, *icon, *text;
+    GtkCellRenderer *checkbutton, *icon, *text;
     GtkWidget *label;
   };
   vector<GtkColumn> column;
@@ -396,6 +402,7 @@ struct pListView : public pWidget {
   void append(const lstring &text);
   void autoSizeColumns();
   bool checked(unsigned row);
+  bool focused();
   void modify(unsigned row, const lstring &text);
   void remove(unsigned row);
   void reset();
@@ -420,7 +427,7 @@ struct pListView : public pWidget {
 struct pProgressBar : public pWidget {
   ProgressBar &progressBar;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   void setPosition(unsigned position);
 
   pProgressBar(ProgressBar &progressBar) : pWidget(progressBar), progressBar(progressBar) {}
@@ -429,16 +436,18 @@ struct pProgressBar : public pWidget {
   void orphan();
 };
 
-struct pRadioBox : public pWidget {
-  RadioBox &radioBox;
+struct pRadioButton : public pWidget {
+  RadioButton &radioButton;
 
   bool checked();
-  Geometry minimumGeometry();
+  Size minimumSize();
   void setChecked();
-  void setGroup(const set<RadioBox&> &group);
+  void setGroup(const set<RadioButton&> &group);
   void setText(const string &text);
 
-  pRadioBox(RadioBox &radioBox) : pWidget(radioBox), radioBox(radioBox) {}
+  pRadioButton(RadioButton &radioButton) : pWidget(radioButton), radioButton(radioButton) {}
+  void onActivate();
+  pRadioButton& parent();
   void constructor();
   void destructor();
   void orphan();
@@ -449,6 +458,7 @@ struct pTextEdit : public pWidget {
   GtkWidget *subWidget;
   GtkTextBuffer *textBuffer;
 
+  bool focused();
   void setCursorPosition(unsigned position);
   void setEditable(bool editable);
   void setText(const string &text);
@@ -461,15 +471,15 @@ struct pTextEdit : public pWidget {
   void orphan();
 };
 
-struct pVerticalScrollBar : public pWidget {
-  VerticalScrollBar &verticalScrollBar;
+struct pVerticalScroller : public pWidget {
+  VerticalScroller &verticalScroller;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   unsigned position();
   void setLength(unsigned length);
   void setPosition(unsigned position);
 
-  pVerticalScrollBar(VerticalScrollBar &verticalScrollBar) : pWidget(verticalScrollBar), verticalScrollBar(verticalScrollBar) {}
+  pVerticalScroller(VerticalScroller &verticalScroller) : pWidget(verticalScroller), verticalScroller(verticalScroller) {}
   void constructor();
   void destructor();
   void orphan();
@@ -478,7 +488,7 @@ struct pVerticalScrollBar : public pWidget {
 struct pVerticalSlider : public pWidget {
   VerticalSlider &verticalSlider;
 
-  Geometry minimumGeometry();
+  Size minimumSize();
   unsigned position();
   void setLength(unsigned length);
   void setPosition(unsigned position);
@@ -499,3 +509,5 @@ struct pViewport : public pWidget {
   void destructor();
   void orphan();
 };
+
+}

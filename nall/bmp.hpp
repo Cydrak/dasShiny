@@ -4,7 +4,6 @@
 #include <nall/file.hpp>
 
 //BMP reader / writer
-//author: byuu
 //note: only 24-bit RGB and 32-bit ARGB uncompressed images supported
 
 namespace nall {

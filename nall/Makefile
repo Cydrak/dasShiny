@@ -25,9 +25,6 @@ ifeq ($(platform),)
   else ifneq ($(findstring CYGWIN,$(uname)),)
     platform := win
     delete = del $(subst /,\,$1)
-  else ifneq ($(findstring Msys,$(uname)),)
-    platform := win
-    delete = rm -f $1
   else ifneq ($(findstring Darwin,$(uname)),)
     platform := osx
     delete = rm -f $1
@@ -39,16 +36,29 @@ endif
 
 ifeq ($(compiler),)
   ifeq ($(platform),win)
-    compiler := gcc
+    compiler := g++
+    flags :=
+    link :=
   else ifeq ($(platform),osx)
-    compiler := gcc-mp-4.7
+    compiler := clang
+    flags := -w -stdlib=libc++
+    link := -lc++ -lobjc
   else
-    compiler := gcc-4.7
+    compiler := g++-4.7
+    flags :=
+    link :=
   endif
+
+  cflags := -x c -std=gnu99
+  objcflags := -x objective-c -std=gnu99
+  cppflags := -x c++ -std=gnu++11
+  objcppflags := -x objective-c++ -std=gnu++11
 endif
 
-c := $(compiler) -std=gnu99
-cpp := $(subst cc,++,$(compiler)) -std=gnu++0x
+ifeq ($(arch),x86)
+  flags := -m32 $(flags)
+  link := -m32 $(link)
+endif
 
 ifeq ($(prefix),)
   prefix := /usr/local

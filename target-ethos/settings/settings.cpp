@@ -4,7 +4,8 @@
 #include "input.cpp"
 #include "hotkey.cpp"
 #include "timing.cpp"
-#include "driver.cpp"
+#include "server.cpp"
+#include "advanced.cpp"
 Settings *settings = nullptr;
 
 void SettingsLayout::append(Sizable &sizable, const Size &size, unsigned spacing) {
@@ -25,13 +26,14 @@ Settings::Settings() {
   setStatusVisible();
 
   layout.setMargin(5);
-  panelList.setFont(application->boldFont);
+  panelList.setFont(program->boldFont);
   panelList.append("Video");
   panelList.append("Audio");
   panelList.append("Input");
   panelList.append("Hotkeys");
   panelList.append("Timing");
-  panelList.append("Driver");
+  panelList.append("Server");
+  panelList.append("Advanced");
 
   append(layout);
   layout.append(panelList, {120, ~0}, 5);
@@ -40,10 +42,12 @@ Settings::Settings() {
   append(*inputSettings);
   append(*hotkeySettings);
   append(*timingSettings);
-  append(*driverSettings);
+  append(*serverSettings);
+  append(*advancedSettings);
 
   onClose = [&] {
     timingSettings->analysis.stop = true;
+    setVisible(false);
   };
 
   panelList.onChange = {&Settings::panelChanged, this};
@@ -59,7 +63,8 @@ void Settings::panelChanged() {
   inputSettings->setVisible(false);
   hotkeySettings->setVisible(false);
   timingSettings->setVisible(false);
-  driverSettings->setVisible(false);
+  serverSettings->setVisible(false);
+  advancedSettings->setVisible(false);
   if(panelList.selected() == false) return;
 
   switch(panelList.selection()) {
@@ -68,6 +73,7 @@ void Settings::panelChanged() {
   case 2: return inputSettings->setVisible();
   case 3: return hotkeySettings->setVisible();
   case 4: return timingSettings->setVisible();
-  case 5: return driverSettings->setVisible();
+  case 5: return serverSettings->setVisible();
+  case 6: return advancedSettings->setVisible();
   }
 }

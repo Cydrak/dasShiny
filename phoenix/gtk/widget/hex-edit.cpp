@@ -1,3 +1,5 @@
+namespace phoenix {
+
 static bool HexEdit_keyPress(GtkWidget *widget, GdkEventKey *event, HexEdit *self) {
   return self->p.keyPress(event->keyval);
 }
@@ -5,6 +7,10 @@ static bool HexEdit_keyPress(GtkWidget *widget, GdkEventKey *event, HexEdit *sel
 static bool HexEdit_scroll(GtkRange *range, GtkScrollType scroll, gdouble value, HexEdit *self) {
   self->p.scroll((unsigned)value);
   return false;
+}
+
+bool pHexEdit::focused() {
+  return GTK_WIDGET_HAS_FOCUS(subWidget);
 }
 
 void pHexEdit::setColumns(unsigned columns) {
@@ -261,4 +267,6 @@ void pHexEdit::setScroll() {
 void pHexEdit::updateScroll() {
   unsigned row = hexEdit.state.offset / hexEdit.state.columns;
   gtk_range_set_value(GTK_RANGE(scrollBar), row);
+}
+
 }

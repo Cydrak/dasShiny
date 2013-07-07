@@ -6,8 +6,9 @@ struct Interface : Emulator::Interface::Bind {
   void videoRefresh(const uint32_t *data, unsigned pitch, unsigned width, unsigned height);
   void audioSample(int16_t lsample, int16_t rsample);
   int16_t inputPoll(unsigned port, unsigned device, unsigned input);
-  unsigned dipSettings(const XML::Node &node);
+  unsigned dipSettings(const Markup::Node &node);
   string path(unsigned group);
+  string server();
   void notify(const string &text);
 };
 

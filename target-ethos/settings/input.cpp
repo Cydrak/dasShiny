@@ -1,7 +1,7 @@
 InputSettings *inputSettings = nullptr;
 
 InputSettings::InputSettings() : activeInput(nullptr) {
-  title.setFont(application->titleFont);
+  title.setFont(program->titleFont);
   title.setText("Input Settings");
   focusLabel.setText("When Focus is Lost:");
   focusPause.setText("Pause Emulation");
@@ -31,7 +31,7 @@ InputSettings::InputSettings() : activeInput(nullptr) {
     controlLayout.append(resetButton, {80, 0}, 5);
     controlLayout.append(eraseButton, {80, 0});
 
-  for(auto &emulator : application->emulator) {
+  for(auto &emulator : program->emulator) {
     systemList.append(emulator->information.name);
   }
 
@@ -106,7 +106,7 @@ void InputSettings::synchronize() {
 }
 
 Emulator::Interface& InputSettings::activeSystem() {
-  return *application->emulator[systemList.selection()];
+  return *program->emulator[systemList.selection()];
 }
 
 Emulator::Interface::Port& InputSettings::activePort() {
@@ -157,8 +157,9 @@ void InputSettings::inputChanged() {
 }
 
 void InputSettings::resetInput() {
-  if(MessageWindow::question(*settings, "All inputs will be erased. Are you sure you want to do this?")
-  == MessageWindow::Response::No) return;
+  if(MessageWindow().setParent(*settings)
+    .setText("All inputs will be erased. Are you sure you want to do this?")
+    .question() == MessageWindow::Response::No) return;
 
   auto &device = activeDevice();
   unsigned length = device.input.size();

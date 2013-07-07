@@ -13,6 +13,7 @@ Configuration::Configuration() {
   append(video.saturation = 100, "Video::Saturation");
   append(video.gamma = 150, "Video::Gamma");
   append(video.luminance = 100, "Video::Luminance");
+  append(video.startFullScreen = false, "Video::StartFullScreen");
   append(audio.driver = ruby::audio.default_driver(), "Audio::Driver");
   append(audio.synchronize = true, "Audio::Synchronize");
   append(audio.frequency = 48000, "Audio::Frequency");
@@ -25,14 +26,17 @@ Configuration::Configuration() {
   append(input.focusAllow = false, "Input::Focus::AllowInput");
   append(timing.video = 60.0, "Timing::Video");
   append(timing.audio = 48000.0, "Timing::Audio");
+  append(server.hostname = "", "Server::Hostname");
+  append(server.username = "", "Server::Username");
+  append(server.password = "", "Server::Password");
   load();
 }
 
 void Configuration::load() {
-  configuration::load(application->path("settings.cfg"));
+  configuration::load(program->path("settings.cfg"));
   save();  //creates file if it does not exist
 }
 
 void Configuration::save() {
-  configuration::save(application->path("settings.cfg"));
+  configuration::save(program->path("settings.cfg"));
 }

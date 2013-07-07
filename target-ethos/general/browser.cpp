@@ -6,15 +6,15 @@ Browser::Browser() {
   windowManager->append(this, "Browser");
 
   layout.setMargin(5);
-  pathBrowse.setText("Browse ...");
-  pathUp.setText("..");
+  homeButton.setImage({resource::home, sizeof resource::home});
+  upButton.setImage({resource::up, sizeof resource::up});
   openButton.setText("Open");
 
   append(layout);
   layout.append(pathLayout, {~0, 0}, 5);
     pathLayout.append(pathEdit, {~0, 0}, 5);
-    pathLayout.append(pathBrowse, {0, 0}, 5);
-    pathLayout.append(pathUp, {0, 0});
+    pathLayout.append(homeButton, {28, 28}, 5);
+    pathLayout.append(upButton, {28, 28});
   layout.append(fileList, {~0, ~0}, 5);
   layout.append(controlLayout, {~0, 0});
     controlLayout.append(filterLabel, {~0, 0}, 5);
@@ -27,22 +27,24 @@ Browser::Browser() {
     setPath(path);
   };
 
-  pathBrowse.onActivate = [&] {
-    string path = DialogWindow::folderSelect(*this, this->path);
-    if(!path.empty()) setPath(path);
+  homeButton.onActivate = [&] {
+    string libraryPath = string::read({configpath(), "higan/library.cfg"}).strip();
+    if(libraryPath.empty()) libraryPath = {userpath(), "Emulation/"};
+    if(libraryPath.endswith("/") == false) libraryPath.append("/");
+    setPath(libraryPath);
   };
 
-  pathUp.onActivate = [&] {
-    if(this->path == "/") return;
-    string path = this->path;
-    path.rtrim<1>("/");
-    path = dir(path);
-    setPath(path);
+  upButton.onActivate = [&] {
+    setPath(parentdir(path));
   };
 
   fileList.onChange = {&Browser::synchronize, this};
   fileList.onActivate = openButton.onActivate = {&Browser::fileListActivate, this};
-  onClose = [&] { dialogActive = false; };
+
+  onClose = [&] {
+    setModal(false);
+    setVisible(false);
+  };
 
   synchronize();
 }
@@ -59,11 +61,11 @@ void Browser::synchronize() {
 }
 
 void Browser::saveConfiguration() {
-  config.save(application->path("paths.cfg"));
+  config.save(program->path("paths.cfg"));
 }
 
 void Browser::bootstrap() {
-  for(auto &emulator : application->emulator) {
+  for(auto &emulator : program->emulator) {
     for(auto &media : emulator->media) {
       bool found = false;
       for(auto &folder : folderList) {
@@ -76,7 +78,7 @@ void Browser::bootstrap() {
 
       Folder folder;
       folder.extension = media.type;
-      folder.path = application->basepath;
+      folder.path = {userpath(), "Emulation/", media.name, "/"};
       folder.selection = 0;
       folderList.append(folder);
     }
@@ -87,26 +89,8 @@ void Browser::bootstrap() {
     config.append(folder.selection, string{folder.extension, "::selection"});
   }
 
-  config.load(application->path("paths.cfg"));
-  config.save(application->path("paths.cfg"));
-}
-
-void Browser::inputEvent(unsigned scancode, int16_t value) {
-  if(scancode == keyboard(0)[nall::Keyboard::Escape] && value == 0) onClose();
-
-  //proof of concept only, not very useful:
-  //joypad up/down moves around in the file list, any joypad button loads selected game
-  if(fileList.selected() == false) return;
-  unsigned selection = fileList.selection();
-
-  if(Joypad::isAnyHat(scancode)) {
-    if(value & Joypad::HatUp  ) fileList.setSelection(selection - 1);
-    if(value & Joypad::HatDown) fileList.setSelection(selection + 1);
-  }
-
-  if(Joypad::isAnyButton(scancode) && value == 1) {
-    fileList.onActivate();
-  }
+  config.load(program->path("paths.cfg"));
+  config.save(program->path("paths.cfg"));
 }
 
 string Browser::select(const string &title, const string &extension) {
@@ -121,27 +105,18 @@ string Browser::select(const string &title, const string &extension) {
       break;
     }
   }
-  if(path.empty()) path = application->basepath;
+  if(path.empty()) path = program->basepath;
   setPath(path, selection);
 
   filterLabel.setText({"Filter: *.", extension});
 
   audio.clear();
   setTitle(title);
-  setModal(true);
   setVisible(true);
   fileList.setFocused();
   outputFilename = "";
 
-  dialogActive = true;
-  while(dialogActive == true) {
-    OS::processEvents();
-    inputManager->poll();
-    usleep(20 * 1000);
-  }
-
-  setModal(false);
-  setVisible(false);
+  setModal();
   return outputFilename;
 }
 
@@ -157,28 +132,32 @@ void Browser::setPath(const string &path, unsigned selection) {
   fileList.reset();
   filenameList.reset();
 
-  lstring contents = directory::folders(path);
+  lstring contents = directory::ifolders(path);
 
   for(auto &filename : contents) {
-    if(!filename.wildcard(R"(*.??/)") && !filename.wildcard(R"(*.???/)")) {
+    string suffix = {".", this->extension, "/"};
+    if(filename.endswith("/") && !filename.endswith(suffix)) {
       string name = filename;
       name.rtrim<1>("/");
       fileList.append(name);
-      fileList.setImage(filenameList.size(), 0, image(resource::folder, sizeof resource::folder));
+      fileList.setImage(filenameList.size(), 0, {resource::folder, sizeof resource::folder});
       filenameList.append(filename);
     }
   }
 
   for(auto &filename : contents) {
     string suffix = {".", this->extension, "/"};
-    if(filename.wildcard(R"(*.??/)") || filename.wildcard(R"(*.???/)")) {
-      if(filename.endswith(suffix)) {
-        string name = filename;
-        name.rtrim<1>(suffix);
-        fileList.append(name);
-        fileList.setImage(filenameList.size(), 0, image(resource::game, sizeof resource::game));
-        filenameList.append(filename);
+    if(filename.endswith(suffix)) {
+      string name = filename;
+      name.rtrim<1>(suffix);
+      fileList.append(name);
+      if(1 || file::exists({path, filename, "unverified"}) == false) {
+        fileList.setImage(filenameList.size(), 0, {resource::game, sizeof resource::game});
+      } else {
+        //disabled for now due to performance penalty
+        fileList.setImage(filenameList.size(), 0, {resource::unverified, sizeof resource::unverified});
       }
+      filenameList.append(filename);
     }
   }
 
@@ -190,9 +169,8 @@ void Browser::setPath(const string &path, unsigned selection) {
 void Browser::fileListActivate() {
   unsigned selection = fileList.selection();
   string filename = filenameList[selection];
-  string suffix = {this->extension, "/"};
-  if(filename.endswith(suffix) == false) return setPath({path, filename});
+  if(string{filename}.rtrim<1>("/").endswith(this->extension) == false) return setPath({path, filename});
 
-  dialogActive = false;
   outputFilename = {path, filename};
+  onClose();
 }

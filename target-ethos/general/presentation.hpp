@@ -22,7 +22,8 @@ struct Presentation : Window {
 
   Menu loadMenu;
     vector<Item*> loadListSystem;
-    vector<Item*> loadListSubsystem;
+    Separator loadSeparator;
+    Item loadImport;
   Menu settingsMenu;
     Menu videoMenu;
       RadioItem centerVideo;

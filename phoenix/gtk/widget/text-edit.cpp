@@ -1,6 +1,12 @@
+namespace phoenix {
+
 static void TextEdit_change(TextEdit *self) {
   self->state.text = self->text();
   if(self->p.locked == false && self->onChange) self->onChange();
+}
+
+bool pTextEdit::focused() {
+  return GTK_WIDGET_HAS_FOCUS(subWidget);
 }
 
 void pTextEdit::setCursorPosition(unsigned position) {
@@ -63,4 +69,6 @@ void pTextEdit::destructor() {
 void pTextEdit::orphan() {
   destructor();
   constructor();
+}
+
 }

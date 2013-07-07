@@ -34,32 +34,33 @@ void CheatDatabase::findCodes() {
   cheatList.reset();
   cheat.reset();
 
-  string data;
-  data.readfile(application->path("cheats.xml"));
-  XML::Document document(data);
-  for(auto &node : document["database"]) {
+  auto document = Markup::Document(string::read(program->path("cheats.bml")));
+  for(auto &node : document) {
     if(node.name != "cartridge") continue;
-    if(node["sha256"].data != sha256) continue;
+    if(node["sha256"].text() != sha256) continue;
 
-    setTitle(node["name"].data);
+    setTitle(node["name"].text());
     for(auto &cheat : node) {
       if(cheat.name != "cheat") continue;
-      cheatList.append(cheat["description"].data);
-      this->cheat.append({cheat["code"].data, cheat["description"].data});
+      cheatList.append(cheat["description"].text());
+      this->cheat.append({cheat["code"].text(), cheat["description"].text()});
     }
 
     setVisible();
     return;
   }
 
-  MessageWindow::information(*cheatEditor, "Sorry, no cheat codes were found.");
+  MessageWindow().setParent(*cheatEditor)
+    .setText("Sorry, no cheat codes were found.").information();
 }
 
 void CheatDatabase::addCodes() {
   for(unsigned n = 0; n < cheat.size(); n++) {
     if(cheatList.checked(n) == false) continue;
     if(cheatEditor->import(cheat[n].code, cheat[n].desc) == false) {
-      MessageWindow::warning(*this, "Ran out of empty slots for cheat codes.\nNot all cheat codes were added.");
+      MessageWindow().setParent(*this)
+        .setText("Ran out of empty slots for cheat codes.\n"
+                 "Not all cheat codes were added.").warning();
       break;
     }
   }

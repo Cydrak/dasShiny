@@ -1,15 +1,19 @@
-MessageWindow::Response pMessageWindow::information(Window &parent, const string &text, MessageWindow::Buttons buttons) {
+namespace phoenix {
+
+MessageWindow::Response pMessageWindow::error(MessageWindow::State &state) {
   return MessageWindow::Response::Ok;
 }
 
-MessageWindow::Response pMessageWindow::question(Window &parent, const string &text, MessageWindow::Buttons buttons) {
+MessageWindow::Response pMessageWindow::information(MessageWindow::State &state) {
   return MessageWindow::Response::Ok;
 }
 
-MessageWindow::Response pMessageWindow::warning(Window &parent, const string &text, MessageWindow::Buttons buttons) {
+MessageWindow::Response pMessageWindow::question(MessageWindow::State &state) {
   return MessageWindow::Response::Ok;
 }
 
-MessageWindow::Response pMessageWindow::critical(Window &parent, const string &text, MessageWindow::Buttons buttons) {
+MessageWindow::Response pMessageWindow::warning(MessageWindow::State &state) {
   return MessageWindow::Response::Ok;
+}
+
 }

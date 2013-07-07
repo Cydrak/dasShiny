@@ -1,3 +1,5 @@
+namespace phoenix {
+
 unsigned pVerticalSlider::position() {
   return 0;
 }
@@ -9,4 +11,9 @@ void pVerticalSlider::setPosition(unsigned position) {
 }
 
 void pVerticalSlider::constructor() {
+}
+
+void pVerticalSlider::destructor() {
+}
+
 }

@@ -1,6 +1,6 @@
 #include <nds/interface/interface.hpp>
 
-void Application::bootstrap() {
+void Program::bootstrap() {
   interface = new Interface;
 
   emulator.append(new NintendoDS::Interface);

@@ -21,7 +21,7 @@ struct Interface {
     unsigned id;
     string name;
     string type;
-    string load;
+    bool bootable;
   };
 
   vector<Media> media;
@@ -55,8 +55,9 @@ struct Interface {
     virtual void videoRefresh(const uint32_t*, unsigned, unsigned, unsigned) {}
     virtual void audioSample(int16_t, int16_t) {}
     virtual int16_t inputPoll(unsigned, unsigned, unsigned) { return 0; }
-    virtual unsigned dipSettings(const XML::Node&) { return 0; }
+    virtual unsigned dipSettings(const Markup::Node&) { return 0; }
     virtual string path(unsigned) { return ""; }
+    virtual string server() { return ""; }
     virtual void notify(const string &text) { print(text, "\n"); }
   } *bind;
 
@@ -68,11 +69,13 @@ struct Interface {
   void videoRefresh(const uint32_t *data, unsigned pitch, unsigned width, unsigned height) { return bind->videoRefresh(data, pitch, width, height); }
   void audioSample(int16_t lsample, int16_t rsample) { return bind->audioSample(lsample, rsample); }
   int16_t inputPoll(unsigned port, unsigned device, unsigned input) { return bind->inputPoll(port, device, input); }
-  unsigned dipSettings(const XML::Node &node) { return bind->dipSettings(node); }
+  unsigned dipSettings(const Markup::Node &node) { return bind->dipSettings(node); }
   string path(unsigned group) { return bind->path(group); }
+  string server() { return bind->server(); }
   template<typename... Args> void notify(Args&... args) { return bind->notify({std::forward<Args>(args)...}); }
 
   //information
+  virtual string title() = 0;
   virtual double videoFrequency() = 0;
   virtual double audioFrequency() = 0;
 
@@ -80,9 +83,9 @@ struct Interface {
   virtual bool loaded() { return false; }
   virtual string sha256() { return ""; }
   virtual unsigned group(unsigned id) = 0;
-  virtual void load(unsigned id, const string &manifest) {}
+  virtual void load(unsigned id) {}
   virtual void save() {}
-  virtual void load(unsigned id, const stream &memory, const string &markup = "") {}
+  virtual void load(unsigned id, const stream &memory) {}
   virtual void save(unsigned id, const stream &memory) {}
   virtual void unload() {}
 

@@ -3,35 +3,56 @@
 Utility *utility = nullptr;
 
 void Utility::setInterface(Emulator::Interface *emulator) {
-  application->active = emulator;
+  program->active = emulator;
   presentation->synchronize();
+}
+
+//load from command-line, etc
+void Utility::loadMedia(string pathname) {
+  pathname.transform("\\", "/");
+  if(pathname.endswith("/")) pathname.rtrim("/");
+
+  //if a filename was provided: convert to game folder and then load
+  if(!directory::exists(pathname) && file::exists(pathname)) {
+    // ...
+    return;
+  }
+
+  if(!directory::exists(pathname)) return;
+  string type = extension(pathname);
+
+  //determine type by comparing extension against all emulation cores
+  for(auto &emulator : program->emulator) {
+    for(auto &media : emulator->media) {
+      if(media.bootable == false) continue;
+      if(type != media.type) continue;
+      return loadMedia(emulator, media, {pathname, "/"});
+    }
+  }
+
+  MessageWindow().setText("Unable to determine media type.").warning();
 }
 
 //load menu option selected
 void Utility::loadMedia(Emulator::Interface *emulator, Emulator::Interface::Media &media) {
-  string pathname;
-  if(!media.load.empty()) pathname = application->path({media.load, "/"});
-  if(!directory::exists(pathname)) pathname = browser->select("Load Media", media.type);
+  string pathname = browser->select({"Load ", media.name}, media.type);
   if(!directory::exists(pathname)) return;
-  if(!file::exists({pathname, "manifest.xml"})) return;
-  loadMedia(emulator, media, pathname);
+  return loadMedia(emulator, media, pathname);
 }
 
-//load menu cartridge selected or command-line load
+//load base cartridge
 void Utility::loadMedia(Emulator::Interface *emulator, Emulator::Interface::Media &media, const string &pathname) {
   unload();
   setInterface(emulator);
-  path(0) = application->path({media.name, ".sys/"});
+  path(0) = program->path({media.name, ".sys/"});
   path(media.id) = pathname;
-  if(media.load.empty()) this->pathname.append(pathname);
+  this->pathname.append(pathname);
 
-  string manifest;
-  manifest.readfile({pathname, "manifest.xml"});
-  system().load(media.id, manifest);
+  system().load(media.id);
   system().power();
 
-  if(this->pathname.size() == 0) this->pathname.append(pathname);
   presentation->setSystemName(media.name);
+  presentation->setVisible();
   load();
 }
 
@@ -42,9 +63,7 @@ void Utility::loadRequest(unsigned id, const string &name, const string &type) {
   path(id) = pathname;
   this->pathname.append(pathname);
 
-  string manifest;
-  manifest.readfile({pathname, "manifest.xml"});
-  system().load(id, manifest);
+  system().load(id);
 }
 
 //request from emulation core to load non-volatile media file
@@ -63,31 +82,24 @@ void Utility::saveRequest(unsigned id, const string &path) {
 }
 
 void Utility::connect(unsigned port, unsigned device) {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
   system().connect(port, device);
 }
 
 void Utility::power() {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
   system().power();
 }
 
 void Utility::reset() {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
   system().reset();
 }
 
 void Utility::load() {
-  string title;
-  for(auto &path : pathname) {
-    string name = path;
-    name.rtrim<1>("/");
-    title.append(notdir(nall::basename(name)), " + ");
-  }
-  title.rtrim<1>(" + ");
-  presentation->setTitle(title);
+  presentation->setTitle(system().title());
 
-  cheatEditor->load({pathname[0], "cheats.xml"});
+  cheatEditor->load({pathname[0], "cheats.bml"});
   stateManager->load({pathname[0], "dasShiny/states.bsa"}, 1);
 
   system().paletteUpdate();
@@ -99,10 +111,10 @@ void Utility::load() {
 }
 
 void Utility::unload() {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
   if(tracerEnable) tracerToggle();
 
-  cheatEditor->save({pathname[0], "cheats.xml"});
+  cheatEditor->save({pathname[0], "cheats.bml"});
   stateManager->save({pathname[0], "dasShiny/states.bsa"}, 1);
 
   system().unload();
@@ -114,14 +126,14 @@ void Utility::unload() {
 
   video.clear();
   audio.clear();
-  presentation->setTitle({Emulator::Name, " v", Emulator::Version});
+  presentation->setTitle({Emulator::Name, " ", Emulator::Version});
   cheatDatabase->setVisible(false);
   cheatEditor->setVisible(false);
   stateManager->setVisible(false);
 }
 
 void Utility::saveState(unsigned slot) {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
   serializer s = system().serialize();
   if(s.size() == 0) return;
   directory::create({pathname[0], "dasShiny/"});
@@ -130,7 +142,7 @@ void Utility::saveState(unsigned slot) {
 }
 
 void Utility::loadState(unsigned slot) {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
   auto memory = file::read({pathname[0], "dasShiny/state-", slot, ".bsa"});
   if(memory.size() == 0) return showMessage({"Unable to locate slot ", slot, " state"});
   serializer s(memory.data(), memory.size());
@@ -139,7 +151,7 @@ void Utility::loadState(unsigned slot) {
 }
 
 void Utility::tracerToggle() {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
   tracerEnable = !tracerEnable;
   bool result = system().tracerEnable(tracerEnable);
   if( tracerEnable &&  result) return utility->showMessage("Tracer activated");
@@ -149,7 +161,7 @@ void Utility::tracerToggle() {
 }
 
 void Utility::synchronizeDSP() {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) return;
 
   if(config->video.synchronize == false) {
     return dspaudio.setFrequency(system().audioFrequency());
@@ -195,7 +207,12 @@ void Utility::updateShader() {
 }
 
 void Utility::resize(bool resizeWindow) {
-  if(application->active == nullptr) return;
+  if(program->active == nullptr) {
+    auto geometry = presentation->geometry();
+    presentation->viewport.setGeometry({0, 0, geometry.width, geometry.height});
+    return;
+  }
+
   Geometry geometry = presentation->geometry();
   unsigned width  = system().information.width;
   unsigned height = system().information.height;
@@ -263,9 +280,9 @@ void Utility::updateStatus() {
   string text;
   if((currentTime - statusTime) <= 2) {
     text = statusMessage;
-  } else if(application->active == nullptr) {
+  } else if(program->active == nullptr) {
     text = "No cartridge loaded";
-  } else if(application->pause || application->autopause) {
+  } else if(program->pause || program->autopause) {
     text = "Paused";
   } else {
     text = statusText;

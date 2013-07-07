@@ -88,6 +88,7 @@ public:
       }
       //wait for buffer playback to catch up to sample generation if not synchronizing
       if(settings.synchronize == false || device.queue_length < 3) break;
+      usleep(1);
     }
 
     if(device.queue_length < 3) {

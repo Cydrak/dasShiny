@@ -344,19 +344,19 @@ void System::loadRTC(const stream& stream) {
   if(document["rtc"].exists() == false)
     return;
 
-  auto &rtc = document["rtc"];
+  const auto &rtc = document["rtc"];
   //string model = rtc["model"].data;
   
   if(rtc["settings"].exists()) {
-    clock.status1  = hex(rtc["settings"]["status"].data);
-    clock.status2  = hex(rtc["settings"]["mode"].data);
-    clock.adjust   = hex(rtc["settings"]["adjust"].data);
-    clock.userByte = hex(rtc["settings"]["scratch"].data);
+    clock.status1  = hex(rtc["settings/status"].data);
+    clock.status2  = hex(rtc["settings/mode"].data);
+    clock.adjust   = hex(rtc["settings/adjust"].data);
+    clock.userByte = hex(rtc["settings/scratch"].data);
   }
   if(rtc["clock"].exists()) {
-    lstring date = rtc["clock"]["date"].data.split("/");
-    lstring time = rtc["clock"]["time"].data.split(":");
-    string  wday = rtc["clock"]["day"].data;
+    lstring date = rtc["clock/date"].data.split("/");
+    lstring time = rtc["clock/time"].data.split(":");
+    string  wday = rtc["clock/day"].data;
     
     if(date.size() >= 3 && time.size() >= 3) {
       string sec  = time[2];
@@ -381,9 +381,9 @@ void System::loadRTC(const stream& stream) {
     string alarm = {"alarm", i+1};
     if(rtc[alarm].exists() == false) continue;
     
-    string  wday = rtc[alarm]["day"].data;
-    lstring time = rtc[alarm]["time"].data.split(":");
-    lstring mode = rtc[alarm]["mode"].data.split(",");
+    string  wday = rtc[{alarm,"/day"}].data;
+    lstring time = rtc[{alarm,"/time"}].data.split(":");
+    lstring mode = rtc[{alarm,"/mode"}].data.split(",");
     
     clock.alarm[i].setting[0] = hex(wday) & 0x07;
     
@@ -399,9 +399,9 @@ void System::loadRTC(const stream& stream) {
   }
 
   if(rtc["saved"].exists()) {
-    lstring savedOn  = rtc["saved"]["on"].data.split("/");
-    lstring savedAt  = rtc["saved"]["at"].data.split(":");
-    string  savedDst = rtc["saved"]["dst"].data;
+    lstring savedOn  = rtc["saved/on"].data.split("/");
+    lstring savedAt  = rtc["saved/at"].data.split(":");
+    string  savedDst = rtc["saved/dst"].data;
     
     if(savedOn.size() >= 3 && savedAt.size() >= 3) {
       struct tm last = {};

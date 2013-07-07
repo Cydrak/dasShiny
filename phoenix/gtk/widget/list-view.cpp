@@ -1,3 +1,5 @@
+namespace phoenix {
+
 static void ListView_activate(ListView *self) {
   if(self->onActivate) self->onActivate();
 }
@@ -33,6 +35,10 @@ bool pListView::checked(unsigned row) {
   if(gtk_tree_model_get_iter_from_string(model, &iter, string(row)) == false) return false;
   gtk_tree_model_get(model, &iter, 0, &state, -1);
   return state;
+}
+
+bool pListView::focused() {
+  return GTK_WIDGET_HAS_FOCUS(subWidget);
 }
 
 void pListView::modify(unsigned row, const lstring &text) {
@@ -76,7 +82,7 @@ unsigned pListView::selection() {
 }
 
 void pListView::setCheckable(bool checkable) {
-  gtk_cell_renderer_set_visible(column(0).checkbox, checkable);
+  gtk_cell_renderer_set_visible(column(0).checkbutton, checkable);
 }
 
 void pListView::setChecked(unsigned row, bool checked) {
@@ -149,12 +155,12 @@ void pListView::constructor() {
     gtk_tree_view_column_set_resizable(cell.column, true);
     gtk_tree_view_column_set_title(cell.column, "");
 
-    if(column.size() == 0) {  //first column checkbox
-      cell.checkbox = gtk_cell_renderer_toggle_new();
-      gtk_tree_view_column_pack_start(cell.column, cell.checkbox, false);
-      gtk_tree_view_column_set_attributes(cell.column, cell.checkbox, "active", gtype.size(), nullptr);
+    if(column.size() == 0) {  //first column checkbutton
+      cell.checkbutton = gtk_cell_renderer_toggle_new();
+      gtk_tree_view_column_pack_start(cell.column, cell.checkbutton, false);
+      gtk_tree_view_column_set_attributes(cell.column, cell.checkbutton, "active", gtype.size(), nullptr);
       gtype.append(G_TYPE_BOOLEAN);
-      g_signal_connect(cell.checkbox, "toggled", G_CALLBACK(ListView_toggle), (gpointer)&listView);
+      g_signal_connect(cell.checkbutton, "toggled", G_CALLBACK(ListView_toggle), (gpointer)&listView);
     }
 
     cell.icon = gtk_cell_renderer_pixbuf_new();
@@ -181,7 +187,7 @@ void pListView::constructor() {
     gtk_widget_show(cell.label);
   }
 
-  gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(subWidget), headerText.size() >= 2);  //two or more columns + checkbox column
+  gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(subWidget), headerText.size() >= 2);  //two or more columns + checkbutton column
   gtk_tree_view_set_search_column(GTK_TREE_VIEW(subWidget), 2);
 
   g_signal_connect_swapped(G_OBJECT(subWidget), "cursor-changed", G_CALLBACK(ListView_change), (gpointer)&listView);
@@ -214,4 +220,6 @@ void pListView::setFocused() {
 void pListView::setFont(const string &font) {
   pFont::setFont(gtkWidget, font);
   for(auto &cell : column) pFont::setFont(cell.label, font);
+}
+
 }

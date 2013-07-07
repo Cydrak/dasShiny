@@ -1,7 +1,9 @@
+namespace phoenix {
+
 static gint Window_close(GtkWidget *widget, GdkEvent *event, Window *window) {
-  window->state.ignore = false;
   if(window->onClose) window->onClose();
-  if(window->state.ignore == false) window->setVisible(false);
+  else window->setVisible(false);
+  if(window->state.modal && !window->visible()) window->setModal(false);
   return true;
 }
 
@@ -30,11 +32,12 @@ static gboolean Window_expose(GtkWidget *widget, GdkEvent *event, Window *window
 
 static gboolean Window_configure(GtkWidget *widget, GdkEvent *event, Window *window) {
   if(gtk_widget_get_realized(window->p.widget) == false) return false;
+  if(window->visible() == false) return false;
   GdkWindow *gdkWindow = gtk_widget_get_window(widget);
 
   GdkRectangle border, client;
   gdk_window_get_frame_extents(gdkWindow, &border);
-  gdk_window_get_geometry(gdkWindow, 0, 0, &client.width, &client.height, 0);
+  gdk_window_get_geometry(gdkWindow, nullptr, nullptr, &client.width, &client.height, nullptr);
   gdk_window_get_origin(gdkWindow, &client.x, &client.y);
 
   if(window->state.fullScreen == false) {
@@ -136,6 +139,10 @@ void pWindow::append(Menu &menu) {
 }
 
 void pWindow::append(Widget &widget) {
+  if(widget.font().empty() && !window.state.widgetFont.empty()) {
+    widget.setFont(window.state.widgetFont);
+  }
+
   ((Sizable&)widget).state.window = &window;
   gtk_fixed_put(GTK_FIXED(formContainer), widget.p.gtkWidget, 0, 0);
   if(widget.state.font != "") widget.p.setFont(widget.state.font);
@@ -229,6 +236,12 @@ void pWindow::setGeometry(const Geometry &geometry) {
 //gtk_window_set_policy(GTK_WINDOW(widget), true, true, false);
   gtk_widget_set_size_request(formContainer, geometry.width, geometry.height);
   gtk_window_resize(GTK_WINDOW(widget), geometry.width, geometry.height + menuHeight() + statusHeight());
+
+  for(auto &layout : window.state.layout) {
+    Geometry layoutGeometry = geometry;
+    layoutGeometry.x = layoutGeometry.y = 0;
+    layout.setGeometry(layoutGeometry);
+  }
 }
 
 void pWindow::setMenuFont(const string &font) {
@@ -240,7 +253,14 @@ void pWindow::setMenuVisible(bool visible) {
 }
 
 void pWindow::setModal(bool modal) {
-  gtk_window_set_modal(GTK_WINDOW(widget), modal);
+  if(modal == true) {
+    gtk_window_set_modal(GTK_WINDOW(widget), true);
+    while(window.state.modal) {
+      Application::processEvents();
+      usleep(20 * 1000);
+    }
+    gtk_window_set_modal(GTK_WINDOW(widget), false);
+  }
 }
 
 void pWindow::setResizable(bool resizable) {
@@ -283,9 +303,6 @@ void pWindow::setVisible(bool visible) {
 }
 
 void pWindow::setWidgetFont(const string &font) {
-  for(auto &item : window.state.widget) {
-    if(item.state.font == "") item.setFont(font);
-  }
 }
 
 void pWindow::constructor() {
@@ -294,6 +311,15 @@ void pWindow::constructor() {
   onSizePending = false;
 
   widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+  //if program was given a name, try and set the window taskbar icon from one of the pixmaps folders
+  if(applicationState.name.empty() == false) {
+    if(file::exists({"/usr/share/pixmaps/", applicationState.name, ".png"})) {
+      gtk_window_set_icon_from_file(GTK_WINDOW(widget), string{"/usr/share/pixmaps/", applicationState.name, ".png"}, nullptr);
+    } else if(file::exists({"/usr/local/share/pixmaps/", applicationState.name, ".png"})) {
+      gtk_window_set_icon_from_file(GTK_WINDOW(widget), string{"/usr/local/share/pixmaps/", applicationState.name, ".png"}, nullptr);
+    }
+  }
 
   if(gdk_screen_is_composited(gdk_screen_get_default())) {
     gtk_widget_set_colormap(widget, gdk_screen_get_rgba_colormap(gdk_screen_get_default()));
@@ -349,4 +375,6 @@ unsigned pWindow::menuHeight() {
 
 unsigned pWindow::statusHeight() {
   return window.state.statusVisible ? settings->statusGeometryHeight : 0;
+}
+
 }

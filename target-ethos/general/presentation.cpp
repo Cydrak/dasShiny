@@ -3,7 +3,7 @@ Presentation *presentation = nullptr;
 void Presentation::synchronize() {
   for(auto &emulator : emulatorList) emulator->menu.setVisible(false);
   for(auto &emulator : emulatorList) {
-    if(emulator->interface == application->active) {
+    if(emulator->interface == program->active) {
       active = emulator;
       emulator->menu.setVisible(true);
     }
@@ -29,7 +29,7 @@ void Presentation::synchronize() {
   synchronizeAudio.setChecked(config->audio.synchronize);
   muteAudio.setChecked(config->audio.mute);
 
-  if(application->active == nullptr) {
+  if(program->active == nullptr) {
     toolsMenu.setVisible(false);
   } else {
     toolsMenu.setVisible(true);
@@ -50,15 +50,16 @@ void Presentation::setSystemName(const string &name) {
 Presentation::Presentation() : active(nullptr) {
   bootstrap();
   loadShaders();
-  setGeometry({256, 256, 720, 480});
+  setGeometry({256, 256, 512, 768});
   windowManager->append(this, "Presentation");
 
-  setTitle({::Emulator::Name, " v", ::Emulator::Version});
+  setTitle({::Emulator::Name, " ", ::Emulator::Version});
   setBackgroundColor({0, 0, 0});
   setMenuVisible();
   setStatusVisible();
 
-  loadMenu.setText("Load");
+  loadMenu.setText("Library");
+    loadImport.setText("Import Game ...");
   settingsMenu.setText("Settings");
     videoMenu.setText("Video");
       centerVideo.setText("Center");
@@ -85,11 +86,7 @@ Presentation::Presentation() : active(nullptr) {
     synchronizeTime.setText("Synchronize Time");
 
   append(loadMenu);
-  for(auto &item : loadListSystem) loadMenu.append(*item);
-  if(loadListSubsystem.size() > 0) {
-    loadMenu.append(*new Separator);
-    for(auto &item : loadListSubsystem) loadMenu.append(*item);
-  }
+    for(auto &item : loadListSystem) loadMenu.append(*item);
   for(auto &systemItem : emulatorList) append(systemItem->menu);
   append(settingsMenu);
     settingsMenu.append(videoMenu);
@@ -100,8 +97,10 @@ Presentation::Presentation() : active(nullptr) {
       for(auto &shader : shaderList) shaderMenu.append(*shader);
     settingsMenu.append(*new Separator);
     settingsMenu.append(synchronizeVideo, synchronizeAudio, muteAudio);
-    settingsMenu.append(*new Separator);
-    settingsMenu.append(configurationSettings);
+    if(Intrinsics::platform() != Intrinsics::Platform::OSX) {
+      settingsMenu.append(*new Separator);
+      settingsMenu.append(configurationSettings);
+    }
   append(toolsMenu);
     toolsMenu.append(saveStateMenu);
       for(unsigned n = 0; n < 5; n++) saveStateMenu.append(saveStateItem[n]);
@@ -111,10 +110,24 @@ Presentation::Presentation() : active(nullptr) {
     toolsMenu.append(resizeWindow, stateManager, cheatEditor, synchronizeTime);
 
   append(layout);
-  layout.append(viewport, {0, 0, 720, 480});
+  layout.append(viewport, {0, 0, 1, 1});
 
-  onSize = [&] { utility->resize(); };
-  onClose = [&] { application->quit = true; };
+  onSize = [&] {
+    utility->resize();
+  };
+
+  onClose = [&] {
+    setVisible(false);
+    if(Intrinsics::platform() == Intrinsics::Platform::OSX) {
+      utility->unload();
+    } else {
+      Application::quit();
+    }
+  };
+
+  loadImport.onActivate = [&] {
+    // ...
+  };
 
   shaderNone.onActivate = [&] { config->video.shader = "None"; utility->updateShader(); };
   shaderBlur.onActivate = [&] { config->video.shader = "Blur"; utility->updateShader(); };
@@ -138,22 +151,18 @@ Presentation::Presentation() : active(nullptr) {
 }
 
 void Presentation::bootstrap() {
-  for(auto &emulator : application->emulator) {
+  for(auto &emulator : program->emulator) {
     auto iEmulator = new Emulator;
     iEmulator->interface = emulator;
 
     for(auto &media : emulator->media) {
+      if(media.bootable == false) continue;
       Item *item = new Item;
       item->onActivate = [=, &media] {
         utility->loadMedia(iEmulator->interface, media);
       };
-      if(media.load.empty()) {
-        item->setText({media.name, " ..."});
-        loadListSystem.append(item);
-      } else {
-        item->setText({nall::basename(media.load), " ..."});
-        loadListSubsystem.append(item);
-      }
+      item->setText({media.name, " ..."});
+      loadListSystem.append(item);
     }
 
     iEmulator->menu.setText(emulator->information.name);
@@ -203,13 +212,15 @@ void Presentation::bootstrap() {
 }
 
 void Presentation::loadShaders() {
-  string pathname = application->path("Video Shaders/");
+  string pathname = program->path("Video Shaders/");
   lstring files = directory::files(pathname);
   for(auto &filename : files) {
+    lstring name = string{filename}.split(".");
+    //only add shaders that work with current video driver
+    if(name(1) != config->video.driver) continue;
+
     auto shader = new RadioItem;
-    string name = filename;
-    if(auto position = name.position(".")) name[position()] = 0;
-    shader->setText(name);
+    shader->setText(name(0));
     shader->onActivate = [=] {
       config->video.shader = {pathname, filename};
       utility->updateShader();

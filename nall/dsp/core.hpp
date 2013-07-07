@@ -1,6 +1,7 @@
 #ifdef NALL_DSP_INTERNAL_HPP
 
 #include <math.h>
+#include <vector>
 #include <nall/stdint.hpp>
 
 namespace nall {
@@ -69,7 +70,7 @@ protected:
     real intensityInverse;
   } settings;
 
-  Resampler *resampler;
+  Resampler *resampler = nullptr;
   inline void write(real channel[]);
 
   #include "buffer.hpp"

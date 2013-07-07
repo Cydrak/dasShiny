@@ -22,9 +22,16 @@ namespace nall {
   };
 
   struct string {
+    //deprecated: use string text = file::read(filename);
     inline static string read(const string &filename);
 
+    inline static string date();
+    inline static string time();
+    inline static string datetime();
+
     inline void reserve(unsigned);
+    inline void resize(unsigned);
+    inline void clear(char);
     inline bool empty() const;
 
     template<typename... Args> inline string& assign(Args&&... args);
@@ -61,16 +68,19 @@ namespace nall {
     inline string& qlower();
     inline string& qupper();
     inline string& transform(const char *before, const char *after);
+    inline string& reverse();
 
     template<unsigned limit = 0> inline string& ltrim(const char *key = " ");
     template<unsigned limit = 0> inline string& rtrim(const char *key = " ");
-    template<unsigned limit = 0> inline string& trim(const char *key = " ", const char *rkey = 0);
+    template<unsigned limit = 0> inline string& trim(const char *key = " ", const char *rkey = nullptr);
+    inline string& strip();
 
     inline optional<unsigned> position(const char *key) const;
     inline optional<unsigned> iposition(const char *key) const;
     inline optional<unsigned> qposition(const char *key) const;
     inline optional<unsigned> iqposition(const char *key) const;
 
+    inline explicit operator bool() const;
     inline operator const char*() const;
     inline char* operator()();
     inline char& operator[](int);
@@ -115,6 +125,7 @@ namespace nall {
     inline optional<unsigned> find(const char*) const;
     inline string concatenate(const char*) const;
     inline void append() {}
+    inline void isort();
     template<typename... Args> inline void append(const string&, Args&&...);
 
     template<unsigned Limit = 0> inline lstring& split(const char*, const char*);
@@ -154,6 +165,12 @@ namespace nall {
   inline char* qstrupper(char *str);
   inline char* strtr(char *dest, const char *before, const char *after);
 
+  //format.hpp
+  template<signed precision = 0, char padchar = ' '> inline string format(const string &value);
+  template<signed precision = 0, char padchar = '0'> inline string hex(uintmax_t value);
+  template<signed precision = 0, char padchar = '0'> inline string octal(uintmax_t value);
+  template<signed precision = 0, char padchar = '0'> inline string binary(uintmax_t value);
+
   //math.hpp
   inline bool strint(const char *str, int &result);
   inline bool strmath(const char *str, int &result);
@@ -163,6 +180,7 @@ namespace nall {
   inline string realpath(const string &name);
   inline string userpath();
   inline string configpath();
+  inline string temppath();
 
   //strm.hpp
   inline unsigned strmcpy(char *target, const char *source, unsigned length);
@@ -181,7 +199,8 @@ namespace nall {
   //trim.hpp
   template<unsigned limit = 0> inline char* ltrim(char *str, const char *key = " ");
   template<unsigned limit = 0> inline char* rtrim(char *str, const char *key = " ");
-  template<unsigned limit = 0> inline char* trim(char *str, const char *key = " ", const char *rkey = 0);
+  template<unsigned limit = 0> inline char* trim(char *str, const char *key = " ", const char *rkey = nullptr);
+  inline char* strip(char *s);
 
   //utility.hpp
   template<bool Insensitive> alwaysinline bool chrequal(char x, char y);
@@ -193,12 +212,11 @@ namespace nall {
   inline char* integer(char *result, intmax_t value);
   inline char* decimal(char *result, uintmax_t value);
 
+  //these functions are deprecated, use format() instead:
   template<unsigned length = 0, char padding = ' '> inline string integer(intmax_t value);
   template<unsigned length = 0, char padding = ' '> inline string linteger(intmax_t value);
   template<unsigned length = 0, char padding = ' '> inline string decimal(uintmax_t value);
   template<unsigned length = 0, char padding = ' '> inline string ldecimal(uintmax_t value);
-  template<unsigned length = 0, char padding = '0'> inline string hex(uintmax_t value);
-  template<unsigned length = 0, char padding = '0'> inline string binary(uintmax_t value);
   inline unsigned fp(char *str, long double value);
   inline string fp(long double value);
 

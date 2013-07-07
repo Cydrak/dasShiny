@@ -1,9 +1,15 @@
+namespace phoenix {
+
 bool pWidget::enabled() {
   return false;
 }
 
-Geometry pWidget::minimumGeometry() {
-  return { 0, 0, 0, 0 };
+bool pWidget::focused() {
+  return false;
+}
+
+Size pWidget::minimumSize() {
+  return {0, 0};
 }
 
 void pWidget::setEnabled(bool enabled) {
@@ -22,4 +28,9 @@ void pWidget::setVisible(bool visible) {
 }
 
 void pWidget::constructor() {
+}
+
+void pWidget::destructor() {
+}
+
 }

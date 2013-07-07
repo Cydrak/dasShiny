@@ -3,20 +3,24 @@
 
 namespace Emulator {
   static const char Name[] = "dasShiny";
-  static const char Version[] = "0.1";
-  static const char Base[] = "bsnes 091";
+  static const char Version[] = "2013.07";
+  static const char Base[] = "higan 092.09";
   static const char Author[] = "cydrak, byuu";
   static const char License[] = "GPLv3";
+  static const char Website[] = "http://www.dasShiny.org/";
 }
 
 #include <nall/platform.hpp>
 #include <nall/algorithm.hpp>
+#include <nall/base64.hpp>
 #include <nall/directory.hpp>
 #include <nall/dl.hpp>
 #include <nall/dsp.hpp>
 #include <nall/endian.hpp>
 #include <nall/file.hpp>
 #include <nall/function.hpp>
+#include <nall/http.hpp>
+#include <nall/invoke.hpp>
 #include <nall/priority-queue.hpp>
 #include <nall/property.hpp>
 #include <nall/random.hpp>
