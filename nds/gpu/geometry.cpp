@@ -25,8 +25,13 @@ void GPU::submitVertex() {
   case PS::tris:
     v[primitive.size] = input;
     
-    if(++primitive.size >= 3)
+    if(++primitive.size >= 3) {
+      // New triangles and quads DO load new teximage parameters.
+      primitive.size = 0;
+      primitive.texImage = texImage;
+      primitive.texPalette = texPalette;
       submitTri(v[0], v[1], v[2]);
+    }
     break;
     
   case PS::triStrip:
@@ -43,9 +48,12 @@ void GPU::submitVertex() {
   case PS::quads:
     v[primitive.size] = input;
     
-    // Slightly different order than triangles and strips
-    if(++primitive.size >= 4)
+    if(++primitive.size >= 4) {
+      primitive.size = 0;
+      primitive.texImage = texImage;
+      primitive.texPalette = texPalette;
       submitQuad(v[0], v[1], v[2], v[3]);
+    }
     break;
     
   case PS::quadStrip:
@@ -83,9 +91,6 @@ void GPU::submitTri(ClipSpaceVertex& v0, ClipSpaceVertex& v1, ClipSpaceVertex& v
     ClipSpaceVertex *vs[] = { &v0, &v1, &v2 };
     addPoly(vs, 3, clipped);
   }
-  primitive.texImage = texImage;
-  primitive.texPalette = texPalette;
-  primitive.size = 0;
 }
 
 void GPU::submitQuad(ClipSpaceVertex& v0, ClipSpaceVertex& v1, ClipSpaceVertex& v2, ClipSpaceVertex& v3) {
@@ -103,9 +108,6 @@ void GPU::submitQuad(ClipSpaceVertex& v0, ClipSpaceVertex& v1, ClipSpaceVertex& 
     ClipSpaceVertex *vs[] = { &v0, &v1, &v2, &v3 };
     addPoly(vs, 4, clipped);
   }
-  primitive.texImage = texImage;
-  primitive.texPalette = texPalette;
-  primitive.size = 0;
 }
 
 
