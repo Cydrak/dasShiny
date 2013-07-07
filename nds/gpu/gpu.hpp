@@ -50,7 +50,8 @@ struct GPU {
     uint1    depthUseW;  // Use Z or W for depth buffering?
   };
   
-  uint1     powered;
+  uint1     geomPowered;
+  uint1     renderPowered;
   uint2     swapArgument;
   SceneList sceneList[2];
   SceneList *uploadList;

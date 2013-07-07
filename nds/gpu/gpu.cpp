@@ -8,7 +8,8 @@ GPU gpu;
 GPU::GPU() { }
 
 void GPU::power() {
-  powered        = true;
+  geomPowered    = true;
+  renderPowered  = true;
   swapArgument   = 0;
   uploadList     = &sceneList[0];
   renderList     = &sceneList[1];

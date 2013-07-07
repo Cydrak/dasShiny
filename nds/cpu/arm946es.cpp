@@ -475,8 +475,8 @@ uint32 ARM946ES::readReg(uint32 addr, uint32 size) {
   
   // Power
   case 0x0304:
-    return video.screensPowered<< 0 | ppu[0].powered<<1
-         | video.ppu0Screen    <<15 | ppu[1].powered<<9;
+    return video.screensPowered<< 0 | ppu[0].powered<<1 | gpu.renderPowered<<2
+         | video.ppu0Screen    <<15 | ppu[1].powered<<9 | gpu.geomPowered<<3;
     
   // Render status
   case 0x0320: return gpu.regRenderLoad();
@@ -616,8 +616,8 @@ void ARM946ES::writeReg(uint32 addr, uint32 size, uint32 data) {
     if(mask & 0x00ff) {
       video.screensPowered = data>>0;
       ppu[0].powered       = data>>1;
-      //gpu.renderPowered  = data>>2;
-      //gpu.geomPowered    = data>>3;
+      gpu.renderPowered    = data>>2;
+      gpu.geomPowered      = data>>3;
     }
     if(mask & 0xff00) {
       ppu[1].powered       = data>>9;
