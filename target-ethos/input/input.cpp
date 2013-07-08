@@ -153,9 +153,8 @@ bool AbsoluteInput::bind(unsigned scancode, int16_t value) {
 
   if(Mouse::isAnyAxis(scancode) || Mouse::isAnyButton(scancode)) {
     //only one input can be assigned for absolute positioning
-    inputList.reset();
-    mapping = encode;
-    return true;
+    mapping = "";
+    return append(encode);
   }
 
   return false;
