@@ -19,19 +19,15 @@ void Touchscreen::select(bool state) {
 bool Touchscreen::penDown() {
   if(powerMode == 3) return true;  // differs between NDS Lite and original?
   
-  signed NONE = -0x8000;
-  signed x = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::X);
-  signed y = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Y);
-  signed p = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Pressure);
-  signed d = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::PressureD);
+  long NONE = -0x8000;
+  long x = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::X);
+  long y = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Y);
+  long d = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Touched);
+  long p = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Pressure);
   
+  if(p==NONE) p = d? 0x7fff : NONE;   // no analog? use digital pen
+  if(x==NONE || y==NONE) return 0;    // check if pen offscreen
   if(y < 0) return 0;
-  if(x==NONE || y==NONE) {
-    return 0;  // no touch input
-  }
-  if(p==NONE)  // no analog? use digital pen
-    p = !d? NONE : 0x7fff;
-  
   return p > -0x7ff0;
 }
 
@@ -43,21 +39,21 @@ uint8 Touchscreen::transfer(uint8 data) {
     refMode   = data>>2;
     powerMode = data>>0;
     
-    signed NONE = -0x8000;
-    signed x = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::X);
-    signed y = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Y);
-    signed p = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Pressure);
-    signed d = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::PressureD);
+    long NONE = -0x8000;
+    long x = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::X);
+    long y = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Y);
+    long d = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Touched);
+    long p = interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Pressure);
     
-    if(p==NONE)            p = !d? NONE : 0x7fff;     // no analog? use digital pen
-    if(x==NONE || y==NONE) p = NONE;                  // check if pen offscreen
-    if(y < 0)              p = NONE;                  // restrict to bottom screen
+    if(p==NONE)            p = d? 0x7fff : NONE;  // no analog? use digital pen
+    if(x==NONE || y==NONE) p = NONE;              // check if pen offscreen
+    if(y < 0)              p = NONE;              // restrict to bottom screen
     
     x += 0x7fff; y *= 2;
     p += 0x7fff;
     
     if(p > 0) {
-      signed z1 = 0x000, z2 = 0xfff, r = 0xffff - p;
+      long z1 = 0x000, z2 = 0xfff, r = 0xffff - p;
       if(x > 0) {   // bleh, div-by-zero, just use medium pressure for now
         z1 = 0xc00; //0xffffff / (0x1000 + 0x1000/x + 0x1000*(r - y)/x);
         z2 = 0x400; //z1*(0x1000 + 0x1000*r/x) / 0x1000;
@@ -73,11 +69,11 @@ uint8 Touchscreen::transfer(uint8 data) {
       if(input == pressure1) last = z2;     // y- (along x-/y+ diagonal?)
     }
     
-    signed vref = 0x34cc;                     // reference = 3.3V
-    signed room = (273 + 25)*0x1000;          // 25*C in kelvin
-    signed k = room;
-    signed t1 = 0x1000*600 - (k-room)*21/10;  // t1 = 600mV @ room - 2.1mV/*K + error
-    signed t2 = t1 + k * 0x1000/0x292b;       // t2 = t1 + k/2.573
+    long vref = 0x34cc;                     // reference = 3.3V
+    long room = (273 + 25)*0x1000;          // 25*C in kelvin
+    long k = room;
+    long t1 = 0x1000*600 - (k-room)*21/10;  // t1 = 600mV @ room - 2.1mV/*K + error
+    long t2 = t1 + k * 0x1000/0x292b;       // t2 = t1 + k/2.573
     
     if(input == temp0) last = t1 * 0xfff/vref;  // temperature
     if(input == temp1) last = t2 * 0xfff/vref;  // temp (w/bias)

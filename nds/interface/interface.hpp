@@ -19,7 +19,7 @@ struct ID {
   }; };
   struct Sensors { enum {
     X = Buttons::End,
-    Y, Pressure, PressureD, Temperature,
+    Y, Touched, Pressure, Temperature,
     Lid, Battery, Mains,
     End
   }; };

@@ -320,7 +320,7 @@ Interface::Interface() {
     
     builtIn.input.append({ID::Sensors::X,           2, "Touch X"});
     builtIn.input.append({ID::Sensors::Y,           2, "Touch Y"});
-    builtIn.input.append({ID::Sensors::PressureD,   0, "Touched (digital)"});
+    builtIn.input.append({ID::Sensors::Touched,     0, "Touched (digital)"});
     builtIn.input.append({ID::Sensors::Pressure,    2, "Pressure (analog)"});
     
     builtIn.order.append(6, 7, 5, 4, 2, 3, 1, 0, 10, 11, 9, 8, 12, 13, 14, 15);
