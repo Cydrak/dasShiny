@@ -299,65 +299,39 @@ Interface::Interface() {
   media.append({NintendoDS, "Nintendo DS", "nds", true});
   
   // Input devices and ports
-  emptySlot    = Device{ID::Device::Empty, 1<<ID::Port::Slot1|1<<ID::Port::Slot2, "Empty"};
+  emptySlot = Device{ID::Device::Empty,    1<<ID::Port::Slot1
+                                         | 1<<ID::Port::Slot2, "Empty"};
+  gameCard  = Device{ID::Device::GameCard, 1<<ID::Port::Slot1, "Game Card"};
+  gamePak   = Device{ID::Device::GamePak,  1<<ID::Port::Slot2, "Game Pak"};
+  builtIn   = Device{ID::Device::BuiltIn,  1<<ID::Port::BuiltIn, ""};
   
-  // Slot 1 devices
-  gameCard     = Device{ID::Device::GameCard, 1<<ID::Port::Slot1, "Game Card"};
-  
-  // Slot 2 devices
-  gamePak      = Device{ID::Device::GamePak,      1<<ID::Port::Slot2, "Game Pak"};
-  
-  // Internal inputs
-  buttons  = Device{ID::Device::BuiltIn, 1<<ID::Port::Buttons, "Built-in"};
-  sensors  = Device{ID::Device::BuiltIn, 1<<ID::Port::Sensors, "Built-in"};
-  touchpad = Device{ID::Device::BuiltIn, 1<<ID::Port::Touchpad, "Built-in"};
-  
-    sensors.input.append({ID::Sensors::Lid,         0, "Lid closed"});
-    sensors.input.append({ID::Sensors::Battery,     0, "Low battery"});
-    sensors.input.append({ID::Sensors::Mains,       0, "Charging"});
-    sensors.input.append({ID::Sensors::Headphones,  0, "Headphones"});  // ?
-    sensors.input.append({ID::Sensors::Temperature, 2, "Temperature"});
-    sensors.input.append({ID::Sensors::FIQ,         0, "FIQ - debug"});
-    sensors.input.append({ID::Sensors::Reset,       0, "Reset - debug"});
-    sensors.order.append(0,1,2,3,4,5,6);
+    builtIn.input.append({ID::Buttons::A,           0, "A"});
+    builtIn.input.append({ID::Buttons::B,           0, "B"});
+    builtIn.input.append({ID::Buttons::Select,      0, "Select"});
+    builtIn.input.append({ID::Buttons::Start,       0, "Start"});
+    builtIn.input.append({ID::Buttons::Right,       0, "Right"});
+    builtIn.input.append({ID::Buttons::Left,        0, "Left"});
+    builtIn.input.append({ID::Buttons::Up,          0, "Up"});
+    builtIn.input.append({ID::Buttons::Down,        0, "Down"});
+    builtIn.input.append({ID::Buttons::R,           0, "R"});
+    builtIn.input.append({ID::Buttons::L,           0, "L"});
+    builtIn.input.append({ID::Buttons::X,           0, "X"});
+    builtIn.input.append({ID::Buttons::Y,           0, "Y"});
     
-    buttons.input.append({ID::Buttons::A, 0, "A"});
-    buttons.input.append({ID::Buttons::B, 0, "B"});
-    buttons.input.append({ID::Buttons::Select, 0, "Select"});
-    buttons.input.append({ID::Buttons::Start, 0, "Start"});
-    buttons.input.append({ID::Buttons::Right, 0, "Right"});
-    buttons.input.append({ID::Buttons::Left, 0, "Left"});
-    buttons.input.append({ID::Buttons::Up, 0, "Up"});
-    buttons.input.append({ID::Buttons::Down, 0, "Down"});
-    buttons.input.append({ID::Buttons::R, 0, "R"});
-    buttons.input.append({ID::Buttons::L, 0, "L"});
-    buttons.input.append({ID::Buttons::X, 0, "X"});
-    buttons.input.append({ID::Buttons::Y, 0, "Y"});
-    buttons.input.append({ID::Buttons::C, 0, "C - debug"}); // unconnected inputs
-    buttons.input.append({ID::Buttons::D, 0, "D - debug"}); // <- present on debug units?
-    buttons.input.append({ID::Buttons::Z, 0, "Z - debug"}); //
-    buttons.input.append({ID::Buttons::W, 0, "W - debug"}); //
-    buttons.order.append(6,7,5,4,2,3, 1,0,10,11,9,8, 12,13,14,15);
+    builtIn.input.append({ID::Sensors::X,           2, "Touch X"});
+    builtIn.input.append({ID::Sensors::Y,           2, "Touch Y"});
+    builtIn.input.append({ID::Sensors::PressureD,   0, "Touched (digital)"});
+    builtIn.input.append({ID::Sensors::Pressure,    2, "Pressure (analog)"});
     
-    touchpad.input.append({ID::Touchpad::X, 2, "X position"});
-    touchpad.input.append({ID::Touchpad::Y, 2, "Y position"});
-    touchpad.input.append({ID::Touchpad::Pressure, 2, "Pressure (analog)"});
-    touchpad.input.append({ID::Touchpad::PressureD, 0, "Pressure (digital)"});
-    touchpad.order.append(0,1,2,3);
+    builtIn.order.append(6, 7, 5, 4, 2, 3, 1, 0, 10, 11, 9, 8, 12, 13, 14, 15);
   
   // Ports
-  port.append({ID::Port::Buttons, "Buttons"});
-  port.append({ID::Port::Sensors, "Sensors"});
-  port.append({ID::Port::Touchpad, "Touchpad"});
-  port.append({ID::Port::Slot1, "Slot 1"});
-  port.append({ID::Port::Slot2, "Slot 2"});
+  port.append({ID::Port::BuiltIn, "Built-in"});
+//port.append({ID::Port::Slot1,   "Slot 1"});
+//port.append({ID::Port::Slot2,   "Slot 2"});
   
-  device.append(buttons);
-  device.append(sensors);
-  device.append(touchpad);
-  device.append(emptySlot);
-  //device.append(gameCard);
-  //device.append(gamePak);
+  device.append(builtIn);
+//device.append(emptySlot);
   
   for(auto &port : this->port)
     for(auto &device : this->device)

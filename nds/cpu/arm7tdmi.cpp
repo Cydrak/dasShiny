@@ -370,12 +370,14 @@ uint32 ARM7TDMI::readReg(uint32 addr, uint32 size) {
     // - missing link port (SI pin = clock /IRQ)
     // - misc inputs
     uint8 keys = 0;
-    for(unsigned n = 10; n < 16; n++) {
-      if(interface->inputPoll(ID::Port::Buttons, 0, n))
-        keys += 1 << n-10;
-    }
-    if(system.touchscreen.penDown()) keys += 1<<6;
-    if(interface->inputPoll(ID::Port::Sensors,  0, ID::Sensors::Lid)==0)    keys += 1<<7;
+    if(interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Buttons::X))
+      keys += 1<<0;
+    if(interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Buttons::Y))
+      keys += 1<<1;
+    if(system.touchscreen.penDown())
+      keys += 1<<6;
+  //if(interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, ID::Sensors::Lid)==0)
+      keys += 1<<7;
     return (keys ^ 0xff)<<16 | regSio()<<0;
     }
     

@@ -210,7 +210,7 @@ uint32 CPUCore::readReg(uint32 addr, uint32 size) {
   case 0x130: { // Keypad input
     unsigned keys = 0;
     for(unsigned n = 0; n < 10; n++) {
-      if(interface->inputPoll(ID::Port::Buttons, 0, n))
+      if(interface->inputPoll(ID::Port::BuiltIn, ID::Device::BuiltIn, n))
         keys += 1<<n;
     }
     return keys ^ 0x3ff;

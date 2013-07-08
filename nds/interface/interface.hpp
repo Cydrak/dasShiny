@@ -3,24 +3,26 @@ namespace NintendoDS {
 #endif
 
 struct ID {
-  struct Port { enum{
-    Buttons, Sensors, Touchpad,
-    Slot1, Slot2,
+  struct Port { enum {
+    BuiltIn = 0, Slot1, Slot2,
   }; };
     
-  struct Device { enum{
-    Empty=0, BuiltIn=0,
-    /* Slot1 */ GameCard=1,
-    /* Slot2 */ GamePak=1,
+  struct Device { enum {
+    BuiltIn = 0,   // Port::BuiltIn
+    Empty = 0,     // Port::Slot1,2
+    GameCard = 1,  // Port::Slot1
+    GamePak = 1,   // Port::Slot2
   };};
   
-  // Internal inputs
-  struct Sensors { enum{ Lid, Battery, Mains, Temperature, Headphones, FIQ, Reset }; };
-  struct Buttons { enum{ A,B, Select,Start, Right,Left,Up,Down, R,L, X,Y,C,D,Z,W }; };
-  struct Touchpad { enum{ X, Y, Pressure, PressureD }; };
-  
-  // Slot 2 device inputs
-  // ...
+  struct Buttons { enum {
+    A, B, Select, Start, Right, Left, Up, Down, R, L, X, Y, End
+  }; };
+  struct Sensors { enum {
+    X = Buttons::End,
+    Y, Pressure, PressureD, Temperature,
+    Lid, Battery, Mains,
+    End
+  }; };
 };
 
 struct Interface : Emulator::Interface {
@@ -65,9 +67,7 @@ private:
   vector<Device> device;
   
   // System inputs
-  Device sensors;
-  Device buttons;
-  Device touchpad;
+  Device builtIn;
   
   Device emptySlot;
   
