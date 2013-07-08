@@ -17,20 +17,20 @@ TimingAdjustment::TimingAdjustment() {
 
 AdvancedSettings::AdvancedSettings() {
   timingTitle.setFont(program->titleFont);
-  timingTitle.setText("Audiovisual Synchronization");
+  timingTitle.setText("Synchronization");
   videoAdjust.name.setText("Video:");
   videoAdjust.value.setText({config->timing.video});
   audioAdjust.name.setText("Audio:");
   audioAdjust.value.setText({config->timing.audio});
 
   driverTitle.setFont(program->titleFont);
-  driverTitle.setText("Driver Selection");
+  driverTitle.setText("Drivers");
   videoLabel.setText("Video:");
   audioLabel.setText("Audio:");
   inputLabel.setText("Input:");
   
   libraryTitle.setFont(program->titleFont);
-  libraryTitle.setText("Game Library Path");
+  libraryTitle.setText("Game Library");
   libraryLabel.setText("Path:");
   libraryPath.setEditable(false);
   string path = string::read({configpath(), "higan/library.cfg"}).strip().transform("\\", "/");

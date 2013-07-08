@@ -8,7 +8,6 @@ struct OutputSlider : HorizontalLayout {
 
 struct OutputSettings : SettingsLayout {
   Label videoTitle;
-  Label colorAdjustment;
   OutputSlider saturation;
   OutputSlider gamma;
   OutputSlider luminance;

@@ -54,12 +54,12 @@ Program::Program(int argc, char **argv) {
   if(Intrinsics::platform() == Intrinsics::Platform::OSX) {
     normalFont = Font::sans(12);
     boldFont = Font::sans(12, "Bold");
-    titleFont = Font::sans(20, "Bold");
+    titleFont = Font::sans(18, "Bold");
     monospaceFont = Font::monospace(8);
   } else if(Intrinsics::platform() == Intrinsics::Platform::Windows) {
     normalFont = "Tahoma, 8";
     boldFont = "Tahoma, 8, Bold";
-    titleFont = "Tahoma, 16, Bold";
+    titleFont = "Tahoma, 11, Bold";
     monospaceFont = "Lucida Console, 8";
   } else {
     normalFont = Font::sans(8);

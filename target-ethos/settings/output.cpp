@@ -8,9 +8,7 @@ OutputSlider::OutputSlider() {
 
 OutputSettings::OutputSettings() {
   videoTitle.setFont(program->titleFont);
-  videoTitle.setText("Video Settings");
-  colorAdjustment.setFont(program->boldFont);
-  colorAdjustment.setText("Color adjustment:");
+  videoTitle.setText("Video");
   saturation.name.setText("Saturation:");
   saturation.slider.setLength(201);
   gamma.name.setText("Gamma:");
@@ -19,7 +17,7 @@ OutputSettings::OutputSettings() {
   luminance.slider.setLength(101);
 
   audioTitle.setFont(program->titleFont);
-  audioTitle.setText("Audio Settings");
+  audioTitle.setText("Audio");
   frequencyLabel.setText("Frequency:");
   frequency.append("32000hz", "44100hz", "48000hz", "96000hz");
   latencyLabel.setText("Latency:");
@@ -30,7 +28,6 @@ OutputSettings::OutputSettings() {
   volume.slider.setLength(201);
 
   append(videoTitle, {~0, 0}, 5);
-  append(colorAdjustment, {~0, 0});
   append(saturation, {~0, 0});
   append(gamma, {~0, 0});
   append(luminance, {~0, 0}, 5);

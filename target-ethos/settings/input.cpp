@@ -2,7 +2,7 @@ InputSettings *inputSettings = nullptr;
 
 InputSettings::InputSettings() : activeInput(nullptr) {
   title.setFont(program->titleFont);
-  title.setText("Input Settings");
+  title.setText("Input");
   focusLabel.setText("When Focus is Lost:");
   focusPause.setText("Pause Emulation");
   focusAllow.setText("Allow Input");
@@ -16,17 +16,17 @@ InputSettings::InputSettings() : activeInput(nullptr) {
     focusLayout.append(focusLabel, {0, 0}, 5);
     focusLayout.append(focusPause, {0, 0}, 5);
     focusLayout.append(focusAllow, {0, 0});
-  append(selectionLayout, {~0, 0}, 5);
-    selectionLayout.append(systemList, {~0, 0}, 5);
-    selectionLayout.append(portList, {~0, 0}, 5);
-    selectionLayout.append(deviceList, {~0, 0});
+  //append(selectionLayout, {~0, 0}, 5);
+  //  selectionLayout.append(systemList, {~0, 0}, 5);
+  //  selectionLayout.append(portList, {~0, 0}, 5);
+  //  selectionLayout.append(deviceList, {~0, 0});
   append(inputList, {~0, ~0}, 5);
   append(controlLayout, {~0, 0});
-    controlLayout.append(assign[0], {100, 0}, 5);
-    controlLayout.append(assign[1], {100, 0}, 5);
-    controlLayout.append(assign[2], {100, 0}, 5);
-    controlLayout.append(assign[3], {100, 0}, 5);
-    controlLayout.append(assign[4], {100, 0}, 5);
+    controlLayout.append(assign[0], {60, 0}, 5);
+    controlLayout.append(assign[1], {30, 0}, 5);
+    controlLayout.append(assign[2], {50, 0}, 5);
+    controlLayout.append(assign[3], {30, 0}, 5);
+    controlLayout.append(assign[4], {50, 0}, 5);
     controlLayout.append(spacer, {~0, 0});
     controlLayout.append(resetButton, {80, 0}, 5);
     controlLayout.append(eraseButton, {80, 0});
@@ -69,10 +69,18 @@ void InputSettings::synchronize() {
     auto &input = activeDevice().input[number];
     auto selectedInput = inputManager->inputMap[input.guid];
 
+    if(dynamic_cast<RelativeInput*>(selectedInput)) {
+      assign[0].setText("Mouse X");
+      assign[1].setText("Y");
+      assign[0].setVisible(true);
+      assign[1].setVisible(true);
+      assign[2].setVisible(false);
+    }
+
     if(dynamic_cast<DigitalInput*>(selectedInput)) {
-      assign[0].setText("Mouse Left");
-      assign[1].setText("Mouse Middle");
-      assign[2].setText("Mouse Right");
+      assign[0].setText("Left");
+      assign[1].setText("M");
+      assign[2].setText("Right");
       assign[0].setVisible(true);
       assign[1].setVisible(true);
       assign[2].setVisible(true);
@@ -80,19 +88,11 @@ void InputSettings::synchronize() {
       assign[4].setVisible(false);
     }
 
-    if(dynamic_cast<RelativeInput*>(selectedInput)) {
-      assign[0].setText("Mouse X");
-      assign[1].setText("Mouse Y");
-      assign[0].setVisible(true);
-      assign[1].setVisible(true);
-      assign[2].setVisible(false);
-    }
-
     if(dynamic_cast<AbsoluteInput*>(selectedInput)) {
       assign[0].setText("Pointer X");
-      assign[1].setText("Pointer Y");
+      assign[1].setText("Y");
       assign[2].setText("Left");
-      assign[3].setText("Middle");
+      assign[3].setText("M");
       assign[4].setText("Right");
       assign[0].setVisible(true);
       assign[1].setVisible(true);

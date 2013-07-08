@@ -19,7 +19,7 @@ Settings::Settings() {
   setGeometry({128, 128, 640, 360});
   windowManager->append(this, "Settings");
 
-  setTitle("Configuration Settings");
+  setTitle("Configuration");
   setStatusVisible();
 
   layout.setMargin(5);
@@ -43,7 +43,7 @@ Settings::Settings() {
 
   panelList.onChange = {&Settings::panelChanged, this};
 
-  panelList.setSelection(2);
+  panelList.setSelection(1);
   panelChanged();
 }
 
