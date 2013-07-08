@@ -6,7 +6,7 @@ struct SettingsLayout : HorizontalLayout {
   SettingsLayout();
 };
 
-#include "video.hpp"
+#include "output.hpp"
 #include "input.hpp"
 #include "hotkey.hpp"
 #include "advanced.hpp"

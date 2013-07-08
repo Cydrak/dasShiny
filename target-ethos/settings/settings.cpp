@@ -1,5 +1,5 @@
 #include "../ethos.hpp"
-#include "video.cpp"
+#include "output.cpp"
 #include "input.cpp"
 #include "hotkey.cpp"
 #include "advanced.cpp"
