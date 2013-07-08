@@ -6,10 +6,6 @@ Configuration::Configuration() {
   append(video.synchronize = false, "Video::Synchronize");
   append(video.shader = "Blur", "Video::Shader");
   append(video.scaleMode = 0, "Video::ScaleMode");
-  append(video.aspectCorrection = true, "Video::AspectCorrection");
-  append(video.maskOverscan = false, "Video::MaskOverscan");
-  append(video.maskOverscanHorizontal = 8, "Video::MaskOverscan::Horizontal");
-  append(video.maskOverscanVertical = 8, "Video::MaskOverscan::Vertical");
   append(video.saturation = 100, "Video::Saturation");
   append(video.gamma = 150, "Video::Gamma");
   append(video.luminance = 100, "Video::Luminance");

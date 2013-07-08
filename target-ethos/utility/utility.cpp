@@ -198,10 +198,6 @@ void Utility::resize(bool resizeWindow) {
   unsigned scaledHeight = geometry.height / height;
   unsigned multiplier   = max(1u, min(scaledWidth, scaledHeight));
 
-  if(config->video.aspectCorrection) {
-    width *= system().information.aspectRatio;
-  }
-
   width  *= multiplier;
   height *= multiplier;
 

@@ -1,23 +1,30 @@
-struct VideoSlider : HorizontalLayout {
+struct OutputSlider : HorizontalLayout {
   Label name;
   Label value;
   HorizontalSlider slider;
 
-  VideoSlider();
+  OutputSlider();
 };
 
-struct VideoSettings : SettingsLayout {
-  Label title;
+struct OutputSettings : SettingsLayout {
+  Label videoTitle;
   Label colorAdjustment;
-  VideoSlider saturation;
-  VideoSlider gamma;
-  VideoSlider luminance;
-  Label overscanAdjustment;
-  VideoSlider overscanHorizontal;
-  VideoSlider overscanVertical;
+  OutputSlider saturation;
+  OutputSlider gamma;
+  OutputSlider luminance;
+
+  Label audioTitle;
+  HorizontalLayout audioLayout;
+    Label frequencyLabel;
+    ComboButton frequency;
+    Label latencyLabel;
+    ComboButton latency;
+    Label resamplerLabel;
+    ComboButton resampler;
+  OutputSlider volume;
 
   void synchronize();
-  VideoSettings();
+  OutputSettings();
 };
 
-extern VideoSettings *videoSettings;
+extern OutputSettings *outputSettings;

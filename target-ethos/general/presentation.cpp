@@ -23,8 +23,6 @@ void Presentation::synchronize() {
   case 1: scaleVideo.setChecked(); break;
   case 2: stretchVideo.setChecked(); break;
   }
-  aspectCorrection.setChecked(config->video.aspectCorrection);
-  maskOverscan.setChecked(config->video.maskOverscan);
   synchronizeVideo.setChecked(config->video.synchronize);
   synchronizeAudio.setChecked(config->audio.synchronize);
   muteAudio.setChecked(config->audio.mute);
@@ -56,8 +54,6 @@ Presentation::Presentation() : active(nullptr) {
       scaleVideo.setText("Scale");
       stretchVideo.setText("Stretch");
       RadioItem::group(centerVideo, scaleVideo, stretchVideo);
-      aspectCorrection.setText("Aspect Correction");
-      maskOverscan.setText("Mask Overscan");
     shaderMenu.setText("Shader");
       shaderNone.setText("None");
       shaderBlur.setText("Blur");
@@ -73,7 +69,7 @@ Presentation::Presentation() : active(nullptr) {
   for(auto &systemItem : emulatorList) append(systemItem->menu);
   append(settingsMenu);
     settingsMenu.append(videoMenu);
-      videoMenu.append(centerVideo, scaleVideo, stretchVideo, *new Separator, aspectCorrection, maskOverscan);
+      videoMenu.append(centerVideo, scaleVideo, stretchVideo);
     settingsMenu.append(shaderMenu);
       shaderMenu.append(shaderNone, shaderBlur);
       if(shaderList.size() > 0) shaderMenu.append(*new Separator);
@@ -111,8 +107,6 @@ Presentation::Presentation() : active(nullptr) {
   centerVideo.onActivate  = [&] { config->video.scaleMode = 0; utility->resize(); };
   scaleVideo.onActivate   = [&] { config->video.scaleMode = 1; utility->resize(); };
   stretchVideo.onActivate = [&] { config->video.scaleMode = 2; utility->resize(); };
-  aspectCorrection.onToggle = [&] { config->video.aspectCorrection = aspectCorrection.checked(); utility->resize(); };
-  maskOverscan.onToggle = [&] { config->video.maskOverscan = maskOverscan.checked(); };
   synchronizeVideo.onToggle = [&] { config->video.synchronize = synchronizeVideo.checked(); utility->synchronizeRuby(); };
   synchronizeAudio.onToggle = [&] { config->audio.synchronize = synchronizeAudio.checked(); utility->synchronizeRuby(); };
   muteAudio.onToggle = [&] { config->audio.mute = muteAudio.checked(); utility->synchronizeRuby(); };

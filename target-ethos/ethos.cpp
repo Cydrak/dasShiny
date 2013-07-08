@@ -78,11 +78,9 @@ Program::Program(int argc, char **argv) {
   windowManager = new WindowManager;
   browser = new Browser;
   presentation = new Presentation;
-  videoSettings = new VideoSettings;
-  audioSettings = new AudioSettings;
+  outputSettings = new OutputSettings;
   inputSettings = new InputSettings;
   hotkeySettings = new HotkeySettings;
-  timingSettings = new TimingSettings;
   advancedSettings = new AdvancedSettings;
   settings = new Settings;
   windowManager->loadGeometry();

@@ -7,10 +7,8 @@ struct SettingsLayout : HorizontalLayout {
 };
 
 #include "video.hpp"
-#include "audio.hpp"
 #include "input.hpp"
 #include "hotkey.hpp"
-#include "timing.hpp"
 #include "advanced.hpp"
 
 struct Settings : Window {

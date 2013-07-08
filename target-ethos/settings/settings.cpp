@@ -1,9 +1,7 @@
 #include "../ethos.hpp"
 #include "video.cpp"
-#include "audio.cpp"
 #include "input.cpp"
 #include "hotkey.cpp"
-#include "timing.cpp"
 #include "advanced.cpp"
 Settings *settings = nullptr;
 
@@ -26,24 +24,20 @@ Settings::Settings() {
 
   layout.setMargin(5);
   panelList.setFont(program->boldFont);
-  panelList.append("Video");
-  panelList.append("Audio");
+  panelList.append("Audiovisual");
   panelList.append("Input");
   panelList.append("Hotkeys");
-  panelList.append("Timing");
   panelList.append("Advanced");
 
   append(layout);
   layout.append(panelList, {120, ~0}, 5);
-  append(*videoSettings);
-  append(*audioSettings);
+  append(*outputSettings);
   append(*inputSettings);
   append(*hotkeySettings);
-  append(*timingSettings);
   append(*advancedSettings);
 
   onClose = [&] {
-    timingSettings->analysis.stop = true;
+    advancedSettings->analysis.stop = true;
     setVisible(false);
   };
 
@@ -55,20 +49,16 @@ Settings::Settings() {
 
 void Settings::panelChanged() {
   setStatusText("");
-  videoSettings->setVisible(false);
-  audioSettings->setVisible(false);
+  outputSettings->setVisible(false);
   inputSettings->setVisible(false);
   hotkeySettings->setVisible(false);
-  timingSettings->setVisible(false);
   advancedSettings->setVisible(false);
   if(panelList.selected() == false) return;
 
   switch(panelList.selection()) {
-  case 0: return videoSettings->setVisible();
-  case 1: return audioSettings->setVisible();
-  case 2: return inputSettings->setVisible();
-  case 3: return hotkeySettings->setVisible();
-  case 4: return timingSettings->setVisible();
-  case 5: return advancedSettings->setVisible();
+  case 0: return outputSettings->setVisible();
+  case 1: return inputSettings->setVisible();
+  case 2: return hotkeySettings->setVisible();
+  case 3: return advancedSettings->setVisible();
   }
 }

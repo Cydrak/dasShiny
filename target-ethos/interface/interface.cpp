@@ -58,24 +58,8 @@ void Interface::videoRefresh(const uint32_t *data, unsigned pitch, unsigned widt
   if(video.lock(output, outputPitch, width, height)) {
     pitch >>= 2, outputPitch >>= 2;
 
-    for(unsigned y = 0; y < height; y++) {
+    for(unsigned y = 0; y < height; y++)
       memcpy(output + y * outputPitch, data + y * pitch, 4 * width);
-    }
-
-    if(system().information.overscan && config->video.maskOverscan) {
-      unsigned h = config->video.maskOverscanHorizontal;
-      unsigned v = config->video.maskOverscanVertical;
-
-      if(h) for(unsigned y = 0; y < height; y++) {
-        memset(output + y * outputPitch, 0, 4 * h);
-        memset(output + y * outputPitch + (width - h), 0, 4 * h);
-      }
-
-      if(v) for(unsigned y = 0; y < v; y++) {
-        memset(output + y * outputPitch, 0, 4 * width);
-        memset(output + (height - 1 - y) * outputPitch, 0, 4 * width);
-      }
-    }
 
     video.unlock();
     video.refresh();

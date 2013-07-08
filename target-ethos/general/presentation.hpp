@@ -29,8 +29,6 @@ struct Presentation : Window {
       RadioItem centerVideo;
       RadioItem scaleVideo;
       RadioItem stretchVideo;
-      CheckItem aspectCorrection;
-      CheckItem maskOverscan;
     Menu shaderMenu;
       RadioItem shaderNone;
       RadioItem shaderBlur;

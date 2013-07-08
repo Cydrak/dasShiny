@@ -4,10 +4,6 @@ struct Configuration : configuration {
     bool synchronize;
     string shader;
     unsigned scaleMode;
-    bool aspectCorrection;
-    bool maskOverscan;
-    unsigned maskOverscanHorizontal;
-    unsigned maskOverscanVertical;
     unsigned saturation;
     unsigned gamma;
     unsigned luminance;
