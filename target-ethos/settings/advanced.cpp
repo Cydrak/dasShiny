@@ -33,8 +33,8 @@ AdvancedSettings::AdvancedSettings() {
   libraryTitle.setText("Game Library");
   libraryLabel.setText("Path:");
   libraryPath.setEditable(false);
-  string path = string::read({configpath(), "higan/library.cfg"}).strip().transform("\\", "/");
-  if(path.empty()) path = {userpath(), "Emulation/"};
+  string path = string::read({configpath(), "dasShiny/library.cfg"}).strip().transform("\\", "/");
+  if(path.empty()) path = {userpath(), "Emulation/Nintendo DS"};
   if(path.endswith("/") == false) path.append("/");
   libraryPath.setText(path);
   libraryBrowse.setText("Browse ...");
@@ -115,7 +115,7 @@ AdvancedSettings::AdvancedSettings() {
   libraryBrowse.onActivate = [&] {
     string path = BrowserWindow().setParent(*settings).setPath(userpath()).directory();
     if(path.empty()) return;
-    file::write({configpath(), "higan/library.cfg"}, path);
+    file::write({configpath(), "dasShiny/library.cfg"}, path);
     libraryPath.setText(path);
   };
 }
