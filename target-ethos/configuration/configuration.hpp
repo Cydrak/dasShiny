@@ -31,12 +31,6 @@ struct Configuration : configuration {
     double audio;
   } timing;
 
-  struct Server {
-    string hostname;
-    string username;
-    string password;
-  } server;
-
   void load();
   void save();
   Configuration();
