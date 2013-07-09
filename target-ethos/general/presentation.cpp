@@ -104,16 +104,15 @@ Presentation::Presentation() : active(nullptr) {
 
   loadImport.onActivate = [&] {
     string path = browser->select("Import game");
-    print("import ",path,"\n");
+    print("Importing ",path,"\n");
     
     string container;
     if(NintendoDS::importROMImage(container, utility->libraryPath(), path)) {
-      // feh
-      print("imported ",container,"\n");
+      print("Imported ",container,"\n");
       auto e = program->emulator[0];
       utility->loadMedia(e, e->media[0], container);
     } else {
-      print("import failed.\n");
+      print("Import failed.\n");
     }
   };
 

@@ -153,21 +153,9 @@ string findManifest(string imagePath, string name, bool hash) {
   return findManifest(image.data(), image.size(), name, hash);
 }
 
-void printNode(const Markup::Node &n, int level = 0) {
-  for(int i = level; i > 0; i--)
-    print("  ");
-  
-  print(n.name,":",n.data,"\n");
-  for(auto &c : n)
-    printNode(c, level + 1);
-}
-
 bool importROMImage(string& container, string libraryPath, string sourcePath) {
   string manifest = findManifest(sourcePath, "", true);
   auto elem = Markup::Document(manifest);
-  
-  print("Manifest:\n",manifest,"\n");
-  print("Tree:\n"); printNode(elem);
   
   string name   = elem["title"].text();      // Title "The Legend of Foo"
   string folder = elem["title/file"].text(); //   eg. "Legend of Foo, The"
