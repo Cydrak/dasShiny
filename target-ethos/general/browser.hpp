@@ -9,6 +9,7 @@ struct Browser : Window {
   Label filterLabel;
   Button openButton;
 
+  string select(const string &title);
   string select(const string &title, const string &extension);
   void saveConfiguration();
   void synchronize();
@@ -23,6 +24,7 @@ private:
     unsigned selection;
   };
   vector<Folder> folderList;
+  Folder import;
 
   string outputFilename;
 

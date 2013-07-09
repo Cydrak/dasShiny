@@ -2,11 +2,16 @@
 #define NDS_HPP
 
 // dasShiny - Nintendo DS emulator
-//   Copyright (c) 2012 Cydrak
+//   Copyright (c) 2012-2013 Cydrak
 //   License: GPLv3
 
 #include <emulator/emulator.hpp>
 #include <libco/libco.h>
+
+#include <nall/base64.hpp>
+#include <nall/filemap.hpp>
+#include <nall/map.hpp>
+#include <nall/set.hpp>
 
 namespace NintendoDS {
   enum : unsigned {
@@ -23,6 +28,7 @@ namespace NintendoDS {
   #include <nds/video/video.hpp>
   #include <nds/slot1/slot1.hpp>
   #include <nds/slot2/slot2.hpp>
+  #include <nds/utility/utility.hpp>
   #include <nds/wifi/wifi.hpp>
 }
 

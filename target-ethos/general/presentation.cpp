@@ -1,3 +1,6 @@
+
+#include <nds/utility/utility.hpp>
+
 Presentation *presentation = nullptr;
 
 void Presentation::synchronize() {
@@ -66,6 +69,7 @@ Presentation::Presentation() : active(nullptr) {
 
   append(loadMenu);
     for(auto &item : loadListSystem) loadMenu.append(*item);
+    loadMenu.append(loadSeparator, loadImport);
   for(auto &systemItem : emulatorList) append(systemItem->menu);
   append(settingsMenu);
     settingsMenu.append(videoMenu);
@@ -99,7 +103,18 @@ Presentation::Presentation() : active(nullptr) {
   };
 
   loadImport.onActivate = [&] {
-    // ...
+    string path = browser->select("Import game");
+    print("import ",path,"\n");
+    
+    string container;
+    if(NintendoDS::importROMImage(container, utility->libraryPath(), path)) {
+      // feh
+      print("imported ",container,"\n");
+      auto e = program->emulator[0];
+      utility->loadMedia(e, e->media[0], container);
+    } else {
+      print("import failed.\n");
+    }
   };
 
   shaderNone.onActivate = [&] { config->video.shader = "None"; utility->updateShader(); };

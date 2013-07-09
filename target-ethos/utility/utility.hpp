@@ -1,6 +1,8 @@
 struct Utility {
   void setInterface(Emulator::Interface *emulator);
-
+  
+  string libraryPath();
+  
   void loadMedia(string pathname);
   void loadMedia(Emulator::Interface *emulator, Emulator::Interface::Media &media);
   void loadMedia(Emulator::Interface *emulator, Emulator::Interface::Media &media, const string &pathname);

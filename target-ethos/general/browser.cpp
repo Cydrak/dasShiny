@@ -28,10 +28,7 @@ Browser::Browser() {
   };
 
   homeButton.onActivate = [&] {
-    string libraryPath = string::read({configpath(), "higan/library.cfg"}).strip();
-    if(libraryPath.empty()) libraryPath = {userpath(), "Emulation/"};
-    if(libraryPath.endswith("/") == false) libraryPath.append("/");
-    setPath(libraryPath);
+    setPath(utility->libraryPath());
   };
 
   upButton.onActivate = [&] {
@@ -83,14 +80,39 @@ void Browser::bootstrap() {
       folderList.append(folder);
     }
   }
-
+  import.path = userpath();
+  import.selection = 0;
+  
   for(auto &folder : folderList) {
     config.append(folder.path, folder.extension);
     config.append(folder.selection, string{folder.extension, "::selection"});
   }
+  config.append(import.path, "Import");
+  config.append(import.path, "Import::selection");
 
   config.load(program->path("paths.cfg"));
   config.save(program->path("paths.cfg"));
+}
+
+string Browser::select(const string& title) {
+  this->extension = "";
+
+  setPath(import.path? import.path : program->basepath, import.selection);
+  
+  string extensions;
+  for(auto &folder : folderList)
+    extensions.append("; *.", folder.extension);
+  extensions.ltrim("; ");
+  filterLabel.setText({"Filter: ",extensions});
+
+  audio.clear();
+  setTitle(title);
+  setVisible(true);
+  fileList.setFocused();
+  outputFilename = "";
+
+  setModal();
+  return outputFilename;
 }
 
 string Browser::select(const string &title, const string &extension) {
@@ -122,8 +144,13 @@ string Browser::select(const string &title, const string &extension) {
 
 void Browser::setPath(const string &path, unsigned selection) {
   //save path for next browser selection
-  for(auto &folder : folderList) {
-    if(folder.extension == extension) folder.path = path;
+  if(this->extension) {
+    for(auto &folder : folderList)
+      if(folder.extension == extension)
+        folder.path = path;
+  }
+  else {
+    import.path = path;
   }
 
   this->path = path;
@@ -134,6 +161,7 @@ void Browser::setPath(const string &path, unsigned selection) {
 
   lstring contents = directory::ifolders(path);
 
+  // Normal folders
   for(auto &filename : contents) {
     string suffix = {".", this->extension, "/"};
     if(filename.endswith("/") && !filename.endswith(suffix)) {
@@ -144,20 +172,36 @@ void Browser::setPath(const string &path, unsigned selection) {
       filenameList.append(filename);
     }
   }
-
-  for(auto &filename : contents) {
+  
+  if(this->extension) {
+    // Game folders
     string suffix = {".", this->extension, "/"};
-    if(filename.endswith(suffix)) {
-      string name = filename;
-      name.rtrim<1>(suffix);
-      fileList.append(name);
-      if(1 || file::exists({path, filename, "unverified"}) == false) {
+    
+    for(auto &filename : contents) {
+      if(filename.endswith(suffix)) {
+        string name = filename;
+        name.rtrim<1>(suffix);
+        fileList.append(name);
         fileList.setImage(filenameList.size(), 0, {resource::game, sizeof resource::game});
-      } else {
-        //disabled for now due to performance penalty
-        fileList.setImage(filenameList.size(), 0, {resource::unverified, sizeof resource::unverified});
+        filenameList.append(filename);
       }
-      filenameList.append(filename);
+    }
+  }
+  else {
+    // Game files
+    contents = directory::ifiles(path);
+    
+    for(auto &filename : contents) {
+      for(auto &folder : folderList) {
+        string suffix = {".", folder.extension};
+        //if(filename.endswith(suffix)) {
+          string name = filename;
+          name.rtrim<1>(suffix);
+          fileList.append(name);
+          fileList.setImage(filenameList.size(), 0, {resource::unverified, sizeof resource::unverified});
+          filenameList.append(filename);
+        //}
+      }
     }
   }
 
@@ -169,8 +213,23 @@ void Browser::setPath(const string &path, unsigned selection) {
 void Browser::fileListActivate() {
   unsigned selection = fileList.selection();
   string filename = filenameList[selection];
-  if(string{filename}.rtrim<1>("/").endswith(this->extension) == false) return setPath({path, filename});
-
+  
+  bool select = false;
+  
+  if(!this->extension) {
+    for(auto &folder : folderList)
+      if(filename.endswith(string{".", folder.extension}))
+        select = true;
+    
+    if(!filename.endswith("/"))
+      select = true;
+  }
+  else if(string{filename}.rtrim<1>("/").endswith(this->extension)) {
+    select = true;
+  }
+  
+  if(!select) return setPath({path, filename});
+  
   outputFilename = {path, filename};
   onClose();
 }

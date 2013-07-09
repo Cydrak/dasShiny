@@ -7,6 +7,14 @@ void Utility::setInterface(Emulator::Interface *emulator) {
   presentation->synchronize();
 }
 
+string Utility::libraryPath() {
+  print("configpath = ",configpath(),"\n");
+  string path = string::read({configpath(), "dasShiny/library.cfg"}).strip().transform("\\", "/");
+  if(path.empty()) path = {userpath(), "Emulation/Nintendo DS/"};
+  if(!path.endswith("/")) path.append("/");
+  return path;
+}
+
 //load from command-line, etc
 void Utility::loadMedia(string pathname) {
   pathname.transform("\\", "/");

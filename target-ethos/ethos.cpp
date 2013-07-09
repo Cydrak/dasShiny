@@ -1,5 +1,6 @@
 #include "ethos.hpp"
 #include <nds/interface/interface.hpp>
+#include <nds/utility/utility.hpp>
 #include "resource/resource.cpp"
 
 Program *program = nullptr;
@@ -48,6 +49,9 @@ Program::Program(int argc, char **argv) {
   emulator.append(new NintendoDS::Interface);
   for(auto &system : emulator)
     system->bind = interface;
+
+  string dbPath = program->path("Nintendo DS.sys/database.bml");
+  NintendoDS::loadDatabase(string::read(dbPath));
 
   active = nullptr;
 
