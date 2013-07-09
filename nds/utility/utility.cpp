@@ -44,8 +44,7 @@ static string heuristicManifest(
   
   // Alternately we could use the game's banner.
   string manifest{"title:",name,"\n"};
-  manifest.append("  id=",gid);
-  manifest.append(" rom=",romSize);
+  manifest.append("  id=",gid," rom=",romSize);
   
   vector<string> pokemon{
     "ADA", "APA", "CPU",         // Diamond/Pearl/Platinum
@@ -62,7 +61,13 @@ static string heuristicManifest(
     manifest.append(" infrared");
   }
   
-  if(gid.beginswith("UOR")) {
+  if(pokemon.find(substr(gid,0,3))) {
+    // Special check to stave off forum threads!
+    // All these use 512K of flash, so that's nice.
+    print("heuristic: Pokemon title.\n");
+    manifest.append(" flash=512K");
+  }
+  else if(gid.beginswith("UOR")) {
     print("heuristic: NAND card.\n");       // WarioWare D.I.Y. / Made in Ore
     manifest.append(" nand=32M");
   }
@@ -78,13 +83,7 @@ static string heuristicManifest(
     print("heuristic: Bluetooth card.\n");  // Pokemon Typing - Battle & Get!
     manifest.append(" bluetooth");
   }
-  else if(pokemon.find(substr(gid,0,3))) {
-    // Special check to stave off forum threads!
-    // All these use 512K of flash, so that's nice.
-    print("heuristic: Pokemon title.\n");
-    manifest.append(" flash=512K");
-  }
-  else {
+  else if(save) {
     manifest.append(" ",save);
   }
   manifest.append("\n  heuristic\n");
