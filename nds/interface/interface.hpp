@@ -38,8 +38,12 @@ struct Interface : Emulator::Interface {
     Slot2ROM, Slot2RAM, Slot2SRAM, Slot2EEPROM, Slot2FRAM, Slot2Flash,
   };
   
+  string systemInfo(string path);
+  bool loadSystem();
+  Markup::Node gameSaveInfo();
+
   string title();
-  
+
   unsigned group(unsigned id);
   bool loaded();
   void load(unsigned id);
@@ -63,6 +67,9 @@ private:
   string systemManifest;
   string gameManifest;
   string gameTitle;
+  
+  BML::Document systemDoc;
+  BML::Document gameDoc;
   
   vector<Device> device;
   

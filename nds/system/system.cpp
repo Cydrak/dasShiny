@@ -84,7 +84,9 @@ bool VRAMMapping::dirty(uint32 addr) {
 
 
 System::System() {
-  firmware.data  = new uint8 [(firmware.size  = 0x080000)/1]();
+  arm7.bios.data = new uint32[(arm7.bios.size = 0x004000)/4]();
+  arm9.bios.data = new uint32[(arm9.bios.size = 0x001000)/4]();
+  firmware.data  = new uint8 [(firmware.size  = 0x040000)/1]();
   
   ewram.data     = new uint16[(ewram.size    = 0x400000)/2];
   iwram.data     = new uint32[(iwram.size    = 0x010000)/4];
@@ -103,7 +105,9 @@ System::System() {
   
   wxram.data     = new uint16[(wxram.size    = 0x002000)/2];
   
-  memset(firmware.data,  0, firmware.size);
+  memset(arm7.bios.data, 0xef, arm7.bios.size);
+  memset(arm9.bios.data, 0xef, arm9.bios.size);
+  memset(firmware.data,  0xff, firmware.size);
   
   callerThread = nullptr;
   activeThread = nullptr;
@@ -334,12 +338,12 @@ void System::loadRTC(const stream& stream) {
   
   if(!stream.size()) return;
   
-  uint8* xml = new uint8[stream.size() + 1];
-  stream.read(xml, stream.size());
-  xml[stream.size()] = 0;
+  uint8* bml = new uint8[stream.size() + 1];
+  stream.read(bml, stream.size());
+  bml[stream.size()] = 0;
   
-  XML::Document document((const char*)xml);
-  delete[] xml;
+  auto document = BML::Document((const char*)bml);
+  delete[] bml;
   
   if(document["rtc"].exists() == false)
     return;
@@ -460,27 +464,26 @@ void System::saveRTC(const stream& stream) {
                 ":", hex<2>(clock.alarm[i].minute & 0x7f) };
   };
   
-  string xml{
-    "<?xml version='1.0' encoding='UTF-8'?>\n",
-    "<rtc>\n",
-    "  <saved on='", saveDate, "'",
-            " at='", saveTime, "'",
-            " dst='", now.tm_isdst, "'/>\n",
+  string bml{
+    "rtc\n",
+    "  saved on=", saveDate,
+           " at=", saveTime,
+           " dst=", now.tm_isdst, "\n",
     "\n",
-    "  <settings status='",  hex<2>(clock.status1), "'",
-               " mode='",    hex<2>(clock.status2), "'",
-               " scratch='", hex<2>(clock.userByte), "'",
-               " adjust='",  hex<2>(clock.adjust), "'/>\n",
+    "  settings status=",  hex<2>(clock.status1),
+              " mode=",    hex<2>(clock.status2),
+              " scratch=", hex<2>(clock.userByte),
+              " adjust=",  hex<2>(clock.adjust), "\n",
     "\n",
-    "  <clock date='", dateStr, "'",
-            " day='",  hex<1>(clock.weekday), "'",
-            " time='", timeStr, "'/>\n",
+    "  clock date=", dateStr,
+           " day=",  hex<1>(clock.weekday),
+           " time=", timeStr, "\n",
     "\n",
-    "  <alarm1 time='", alarmTime[0], "' day='", alarmDay[0], "' mode='", alarmMode[0], "'/>\n",
-    "  <alarm2 time='", alarmTime[1], "' day='", alarmDay[1], "' mode='", alarmMode[1], "'/>\n",
-    "</rtc>"
+    "  alarm1 time=", alarmTime[0], " day=", alarmDay[0], " mode=", alarmMode[0], "\n",
+    "  alarm2 time=", alarmTime[1], " day=", alarmDay[1], " mode=", alarmMode[1], "\n",
+    "\n"
   };
-  stream.write((uint8*)(const char*)xml, xml.length());
+  stream.write((uint8*)(const char*)bml, bml.length());
 }
 
 

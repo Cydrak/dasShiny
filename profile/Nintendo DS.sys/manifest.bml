@@ -1,0 +1,125 @@
+system:    Nintendo DS
+  clock:      66 MHz
+
+  memory
+    arm9
+      size:   4K
+      data:   ARM9 bios
+      sha256: 1693983a7707ae394786fa526c0552457888a51d4e410d715ef07acd5a540555
+
+    arm7
+      size:   16K
+      data:   ARM7 bios
+      sha256: ba65f690eb04ec92db67c0e299e21ad71de087d6d5de8a9cb17a62eaab563c17
+
+    flash:    ST M45PE20
+      size:   256K
+      data:   firmware
+      sha256: varies (see below)
+
+    sdram
+      size:   4M
+
+  chipset
+    clock:           Seiko S35180
+      data:          clock.bml
+
+    powerman:        Mitsumi 3152A
+      revision:      1
+
+    digitizer:       Texas Instruments TSC2046
+      revision:      1
+
+    wlan
+      revision:      1
+      baseband:      Mitsumi MM3155
+      rf-modulator:  RF Micro Devices RF9008
+
+  features
+    screens:         reflective
+    brightness:      fixed
+
+
+system:    Nintendo DS Lite
+  clock:      66 MHz
+
+  memory
+    arm9
+      size:   4K
+      data:   ARM9 bios
+      sha256: 1693983a7707ae394786fa526c0552457888a51d4e410d715ef07acd5a540555
+
+    arm7
+      size:   16K
+      data:   ARM7 bios
+      sha256: ba65f690eb04ec92db67c0e299e21ad71de087d6d5de8a9cb17a62eaab563c17
+
+    flash:    ST M35PE20
+      size:   256K
+      data:   firmware
+      sha256: varies (see below)
+
+    sdram
+      size:   4M
+
+  chipset
+    clock:           Seiko S35180
+      data:          clock.bml
+
+    powerman:        Mitsumi 3205B
+      revision:      2
+
+    digitizer:       Asahi Kasei Microsystems AK4148AVT
+      revision:      2
+
+    wlan
+      revision:      2
+      baseband:      Mitsumi MM3218
+      rf-modulator:  Mitsumi MM3218
+
+      note: Likely several variants exist, judging by the number of patches
+            homebrew libraries have needed over the years.
+
+  features
+    screens:         backlit
+    brightness:      variable
+
+
+firmware
+  variable
+    user-settings:   0x3fe00-0x40000
+    tcpip-setup:     0x3fa00-0x3fe00
+    wlan-setup:      0x0002a-0x00200
+    note
+     :These areas include the console's MAC address, radio calibration and data
+     :needed to use the wireless chipset. Hash with them erased (set to 0xff).
+
+  revision=1 id: MACp
+    sha256:  32f736d9e49ee3bdb1c42c2f1dc3a72c3202695ebbd283bb126a73d7b2075687
+    date:    2004/10/05 11:07
+
+  revision=2 id: MACp
+    sha256:  62d7d6f3b2ebbb7b4bb639b6024cbd07aadc2e8973167a885f1f6c82ada922e3
+    date:    2004/11/26 09:51
+
+  revision=3 id: MACp
+    sha256:  a000c9a7773406dfc9edd1339ec5d0d31809f3fa2486081f583b8c563e5a7479
+    date:    2005/02/28 08:51
+
+  revision=4 id: MACg
+    sha256:  8b67e15fffbdfc9b28a9efacbc951fb778bda86038ef29d983ba2082b2cafdd8
+    date:    2005/06/06 14:48
+
+  revision=5 id: MACg
+    sha256:  b7e22a0df753e46aaf5317e194da52061e8ab39891910def09af63460912f5e5
+    date:    2005/12/07 14:45
+
+  revision=6 id: MACh
+    sha256:  c564f3383f91487b0e1feb719bbf57a035a666ad88b0111fbe217aae258a6b13
+    date:    2006/02/05 21:33
+
+  revision=7 id: MACh
+    sha256:  0d01b7d8043a3591481e2a663f47ce460306eb8a577531cc50d6916875154ea7
+    date:    2006/03/08 11:19
+
+  note: Revisions 6-7 are typically found in DS Lite.
