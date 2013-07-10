@@ -104,6 +104,8 @@ Presentation::Presentation() : active(nullptr) {
 
   loadImport.onActivate = [&] {
     string path = browser->select("Import game");
+    if(!path) return;
+    
     print("Importing ",path,"\n");
     
     string container;
