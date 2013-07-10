@@ -1,3 +1,12 @@
+#if defined(_WIN32)
+#define _WIN32_WINNT 0x0501
+#define UNICODE
+#define NOMINMAX
+#include <winsock2.h>
+#include <windows.h>
+#include <shlwapi.h>
+#endif
+
 #include "utility.hpp"
 
 namespace NintendoDS {
@@ -15,6 +24,96 @@ static string hexfrombase64(string s) {
   
   delete[] data;
   return result;
+}
+
+static string utf8fromUcs2(uint8_t *data) {
+  size_t len = 0;
+  string s;
+  for(;;) {
+    unsigned code;
+    code  = *data++ << 0;
+    code += *data++ << 8;
+    
+    if(code > 0x7ff)
+      s[len++] = 0xe0|code>>12,
+      s[len++] = 0x80|code>>6 & 0x3f,
+      s[len++] = 0x80|code>>0 & 0x3f;
+    else if(code > 0x7f)
+      s[len++] = 0xc0|code>>6,
+      s[len++] = 0x80|code>>0 & 0x3f;
+    else if(code > 0)
+      s[len++] = 0x00|code;
+    else {
+      s[len++] = 0; break;
+    }
+  }
+  return s;
+}
+
+static void convertIcon(string outPath, uint8_t* banner) {
+  uint8_t* bitmap  = banner + 0x020;  // 4x4 x 4bpp tiles
+  uint8_t* palette = banner + 0x220;  // 16 x RGB555
+  
+  uint32_t pixels[32*32];
+  uint32_t outpal[16] = {0};
+  
+  for(int n = 1; n < 16; n++) {
+    int color = palette[2*n+0] | palette[2*n+1]<<8;
+    int r = (color>> 0 & 31) * 0x21/4;
+    int g = (color>> 5 & 31) * 0x21/4;
+    int b = (color>>10 & 31) * 0x21/4;
+    
+    outpal[n] = 0xff<<24 | r<<16 | g<<8 | b;
+  }
+  
+  for(int ty = 0; ty < 4; ty++) {
+    for(int tx = 0; tx < 4; tx++) {
+      auto dest = pixels + 32*(31 - 8*ty) + 8*tx;
+      auto src  = bitmap + 32*(4*ty + tx);
+      
+      for(int y = 0; y < 8; y++)
+        for(int x = 0; x < 8; x++)
+          dest[x - 32*y] = outpal[0xf & src[4*y + x/2] >> 4*(x%2)];
+    }
+  }
+  
+  unsigned rawsize = 32*32*4;
+  file fp;
+  fp.open(outPath, file::mode::write);
+  
+  // Icon header
+  fp.writel(0x10000, 4);  // icon type
+  fp.writel(1, 2);        // image count
+  
+  // Icon directory
+  fp.writel(32, 1);  // width
+  fp.writel(32, 1);  // height
+  fp.writel(0,  1);  // ncolors
+  fp.writel(0,  1);  // reserved
+  fp.writel(1,  2);  // planes
+  fp.writel(32, 2);  // bpp
+  fp.writel(40 + rawsize, 4);
+  fp.writel(22, 4);  // bmp offset
+  
+  //fp.write('B');
+  //fp.write('M');
+  //fp.writel(54 + rawsize, 4);  // bitmap size
+  //fp.writel(0, 4);             // reserved
+  //fp.writel(54, 4);            // pixel offset
+  
+  fp.writel(40, 4);            // info size
+  fp.writel(32, 4);            //   width
+  fp.writel(64, 4);            //   height
+  fp.writel(1, 2);             //   planes
+  fp.writel(32, 2);            //   bpp
+  fp.writel(0, 4);             //   compression
+  fp.writel(rawsize, 4);       //   image size
+  fp.writel(0, 4);             //   x ppm
+  fp.writel(0, 4);             //   y ppm
+  fp.writel(0, 4);
+  fp.writel(0, 4);
+  
+  fp.write((uint8_t*)pixels, rawsize);
 }
 
 
@@ -154,14 +253,40 @@ string findManifest(string imagePath, string name, bool hash) {
 }
 
 bool importROMImage(string& container, string libraryPath, string sourcePath) {
-  string manifest = findManifest(sourcePath, "", true);
-  auto elem = Markup::Document(manifest);
+  file image; image.open(sourcePath, file::mode::read);
   
-  string name   = elem["title"].text();      // Title "The Legend of Foo"
-  string folder = elem["title/file"].text(); //   eg. "Legend of Foo, The"
+  image.seek(0x68);
+  uint32_t bannerOffset = image.readl(4);
+  uint8_t  bannerData[0xa00];
+  image.seek(bannerOffset);
+  image.read(bannerData, sizeof bannerData);
+  image.close();
+  
+  // Not sure if this is UCS-2 or full UTF-16.
+  uint8_t bannerTextBuf[0x100+2] = {0};
+  memcpy(bannerTextBuf, bannerData + 0x340, 0x100);  // UCS-2
+  
+  lstring bannerText = string(utf8fromUcs2(bannerTextBuf)).split("\n");
+  string bannerTitle = bannerText(0).trim();
+  string bannerSubTitle = bannerText(1).trim();
+  string bannerExtra = bannerText(2).trim();
+  string defaultName = bannerTitle;
+  
+  if(bannerExtra)
+    defaultName.append(" - ",bannerSubTitle);
+  
+  string manifest = findManifest(sourcePath, defaultName, true);
+  auto elem = Markup::Document(manifest);
+  print("Manifest:\n",manifest);
+  string name   = elem["title"].text();        // Title "The Legend of Foo"
+  string folder = elem["title/file"].text();   //   eg. "Legend of Foo, The"
   string id     = elem["title/id"].text();
   
   if(!folder) folder = name;
+  
+  // Remove invalid characters from folder name
+  folder = defaultName.replace(": - ", " - ").replace(": ", " - ");
+  folder = folder.transform("<>\"\\|/?*:", "()\'------");
   
   container = {libraryPath,folder,".nds/"};
   string romImage = {container,"rom"};
@@ -208,6 +333,18 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
   if(infrared)  mf.print("  infrared\n");
   if(bluetooth) mf.print("  bluetooth\n");
   mf.print("\n");
+  
+#if defined(_WIN32)
+  PathMakeSystemFolder(utf16_t(container));
+  convertIcon({container, "banner.ico"}, bannerData);
+  
+  file ini; ini.open({container, "desktop.ini"}, file::mode::write);
+  ini.print("[.ShellClassInfo]\n"
+            "ConfirmFileOp=0\n"
+            "IconFile=banner.ico\n"
+            "IconIndex=0\n"
+            "InfoTip=",bannerExtra? bannerExtra : bannerSubTitle,"\n");
+#endif
   return true;
 }
 
