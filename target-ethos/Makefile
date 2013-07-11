@@ -30,7 +30,7 @@ include ruby/Makefile
 link += $(rubylink)
 
 # rules
-objects := $(ui_objects) $(objects)
+objects := $(ui_objects) $(objects) data-resources
 objects := $(patsubst %,obj/%.o,$(objects))
 
 obj/ui-ethos.o: $(ui)/ethos.cpp $(call rwildcard,$(ui)/)
@@ -51,6 +51,18 @@ obj/phoenix.o: phoenix/phoenix.cpp $(call rwildcard,phoenix/*)
 obj/resource.o: $(ui)/resource.rc
 #	windres --target=pe-i386 $(ui)/resource.rc obj/resource.o
 	windres $(resfmt) $(ui)/resource.rc obj/resource.o
+
+
+# make gets all spaced-out at paths with spaces so don't try wildcarding the
+# subfolders as prerequisites. Just re-zip everything. :/
+.PHONY: data/resources.zip
+
+data/resources.zip:
+	cd data/resources; zip -9qr ../resources.zip .; cd ../..
+
+obj/data-resources.o: data/resources.zip
+	ld -r -b binary -o $@ $<
+
 
 # targets
 build: $(objects)

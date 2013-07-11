@@ -2,6 +2,7 @@
 
 #include <nall/platform.hpp>
 #include <nall/config.hpp>
+#include <nall/file.hpp>
 #include <nall/directory.hpp>
 #include <nall/dsp.hpp>
 #include <nall/invoke.hpp>
@@ -10,6 +11,7 @@
 #include <nall/stream/memory.hpp>
 #include <nall/stream/mmap.hpp>
 #include <nall/stream/vector.hpp>
+#include <nall/unzip.hpp>
 using namespace nall;
 
 #include <phoenix/phoenix.hpp>
@@ -45,6 +47,8 @@ struct Program {
   string boldFont;
   string titleFont;
   string monospaceFont;
+  
+  unzip resource;
 
   bool focused();
   string path(const string &filename, bool forwriting = false);

@@ -71,6 +71,15 @@ Program::Program(int argc, char **argv) {
     titleFont = Font::sans(16, "Bold");
     monospaceFont = Font::monospace(8);
   }
+  
+  extern char _binary_data_resources_zip_start[];
+  extern char _binary_data_resources_zip_size[];
+  
+  resource.open((uint8_t*)_binary_data_resources_zip_start,
+                (size_t)_binary_data_resources_zip_size);
+
+  //for(auto &f : resource.file)
+  //  print(f.name,"\n");
 
   config = new Configuration;
   video.driver(config->video.driver);
