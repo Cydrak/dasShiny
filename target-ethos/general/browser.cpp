@@ -142,6 +142,56 @@ string Browser::select(const string &title, const string &extension) {
   return outputFilename;
 }
 
+image imageFromIcon(const string& path) {
+  image defaultIcon{resource::game, sizeof resource::game};
+  file fp;
+  if(!fp.open(path, file::mode::read)) return defaultIcon;
+  if(fp.readl(4) != 0x10000) return defaultIcon;
+  
+  // Search directory for the biggest, highest depth icon.
+  image icon;
+  unsigned width = 0, height = 0, bpp = 0, offset = 0, size = 0;
+  unsigned dirCount = fp.readl(2);
+  while(dirCount--) {
+    unsigned curWidth = fp.readl(1);   if(!curWidth)  curWidth = 256;
+    unsigned curHeight = fp.readl(1);  if(!curHeight) curHeight = 256;
+    fp.readl(4);
+    unsigned curBpp = fp.readl(2);
+    unsigned curSize = fp.readl(4);
+    unsigned curOffset = fp.readl(4);
+    
+    if(curWidth*curHeight > width*height || curBpp > bpp) {
+      width = curWidth;
+      height = curHeight;
+      bpp = curBpp;
+      offset = curOffset;
+      size = curSize;
+    }
+  }
+  fp.seek(offset);
+  
+  uint32 bmiSize = fp.readl(4);
+  int32  bmiWidth = fp.readl(4);
+  int32  bmiHeight = fp.readl(4);
+  uint16 bmiPlanes = fp.readl(2);
+  uint16 bmiDepth = fp.readl(2);
+  
+  // Indexed and PNG icons aren't presently supported, since
+  //   NintendoDS::importROMImage always outputs ARGB8888.
+  bool valid = bmiSize != 0x474e5089 && bmiSize >= 40
+    && bmiWidth == width && bmiHeight == 2*height
+    && bmiPlanes == 1 && bmiDepth == bpp;
+  
+  if(!valid || bpp < 32) return defaultIcon;
+  
+  fp.seek(offset + bmiSize);
+  icon.allocate(width, height);
+  for(unsigned y = 0; y < height; y++)
+    fp.read(icon.data + icon.pitch*(height-1-y), width*4);
+  
+  return icon;
+}
+
 void Browser::setPath(const string &path, unsigned selection) {
   //save path for next browser selection
   if(this->extension) {
@@ -160,7 +210,7 @@ void Browser::setPath(const string &path, unsigned selection) {
   filenameList.reset();
 
   lstring contents = directory::ifolders(path);
-
+  
   // Normal folders
   for(auto &filename : contents) {
     string suffix = {".", this->extension, "/"};
@@ -182,7 +232,9 @@ void Browser::setPath(const string &path, unsigned selection) {
         string name = filename;
         name.rtrim<1>(suffix);
         fileList.append(name);
-        fileList.setImage(filenameList.size(), 0, {resource::game, sizeof resource::game});
+        //fileList.setImage(filenameList.size(), 0, {resource::game, sizeof resource::game});
+        fileList.setImage(filenameList.size(), 0,
+          imageFromIcon({path,filename,"banner.ico"}));
         filenameList.append(filename);
       }
     }

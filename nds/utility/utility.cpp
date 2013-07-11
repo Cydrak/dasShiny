@@ -103,7 +103,7 @@ static void convertIcon(string outPath, uint8_t* banner) {
   
   fp.writel(40, 4);            // info size
   fp.writel(32, 4);            //   width
-  fp.writel(64, 4);            //   height
+  fp.writel(64, 4);            //   height <- must be 2x, even if mask omitted
   fp.writel(1, 2);             //   planes
   fp.writel(32, 2);            //   bpp
   fp.writel(0, 4);             //   compression
