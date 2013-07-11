@@ -256,16 +256,19 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
   file image; image.open(sourcePath, file::mode::read);
   
   image.seek(0x68);
+  
   uint32_t bannerOffset = image.readl(4);
   uint8_t  bannerData[0xa00];
-  image.seek(bannerOffset);
-  image.read(bannerData, sizeof bannerData);
-  image.close();
+  uint8_t  bannerTextBuf[0x100+2] = {0};
   
-  // Not sure if this is UCS-2 or full UTF-16.
-  uint8_t bannerTextBuf[0x100+2] = {0};
-  memcpy(bannerTextBuf, bannerData + 0x340, 0x100);  // UCS-2
-  
+  if(bannerOffset) {
+    image.seek(bannerOffset);
+    image.read(bannerData, sizeof bannerData);
+    image.close();
+    
+    // Not sure if this is UCS-2 or full UTF-16.
+    memcpy(bannerTextBuf, bannerData + 0x340, 0x100);  // UCS-2
+  }
   lstring bannerText = string(utf8fromUcs2(bannerTextBuf)).split("\n");
   string bannerTitle = bannerText(0).trim();
   string bannerSubTitle = bannerText(1).trim();
@@ -274,6 +277,9 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
   
   if(bannerExtra)
     defaultName.append(" - ",bannerSubTitle);
+  
+  if(!defaultName)  // eg. if no banner
+    defaultName = basename(notdir(sourcePath));
   
   string manifest = findManifest(sourcePath, defaultName, true);
   auto elem = Markup::Document(manifest);
@@ -336,7 +342,9 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
   
 #if defined(_WIN32)
   PathMakeSystemFolder(utf16_t(container));
-  convertIcon({container, "banner.ico"}, bannerData);
+  
+  if(bannerOffset)
+    convertIcon({container, "banner.ico"}, bannerData);
   
   file ini; ini.open({container, "desktop.ini"}, file::mode::write);
   ini.print("[.ShellClassInfo]\n"
