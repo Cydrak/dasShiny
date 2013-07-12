@@ -1,4 +1,5 @@
 #include "../ethos.hpp"
+#include <nds/utility/utility.hpp>
 
 Utility *utility = nullptr;
 
@@ -14,16 +15,39 @@ string Utility::libraryPath() {
   return path;
 }
 
+void Utility::importMedia(string pathname) {
+  string container;
+  print("Importing ",pathname,"\n");
+  
+  if(!NintendoDS::validateHeader(filestream(pathname, file::mode::read))) {
+    MessageWindow().setTitle("Import failed").setText(
+      {"Couldn't import ",pathname,".\n"
+       "\n"
+       "This file doesn't look like a Nintendo DS title.\n"
+       "If it is, the header might be damaged or ill-formed."})
+      .error();
+  }
+  else if(!NintendoDS::importROMImage(container, libraryPath(), pathname)) {
+    MessageWindow().setTitle("Import failed").setText(
+      {"Couldn't import ",pathname,".\n"
+       "\n"
+       "Check to see if you've got sufficient permissions and disk space."})
+      .error();
+  }
+  else {
+    auto e = program->emulator[0];
+    loadMedia(e, e->media[0], container);
+  }
+}
+
 //load from command-line, etc
 void Utility::loadMedia(string pathname) {
   pathname.transform("\\", "/");
   if(pathname.endswith("/")) pathname.rtrim("/");
 
   //if a filename was provided: convert to game folder and then load
-  if(!directory::exists(pathname) && file::exists(pathname)) {
-    // ...
-    return;
-  }
+  if(!directory::exists(pathname) && file::exists(pathname))
+    return importMedia(pathname);
 
   if(!directory::exists(pathname)) return;
   string type = extension(pathname);
