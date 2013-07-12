@@ -41,18 +41,6 @@ void ARM7TDMI::power() {
   trace = false;
 }
 
-uint16 crc16(uint8* data, unsigned size, uint16 initial) {
-  uint16 table[] = { 0xa001,0xf001,0xd801,0xcc01,0xc601,0xc301,0xc181,0xc0c1 };
-  uint32 crc = initial;
-  
-  for(unsigned i = 0; i < size; i++) {
-    crc ^= data[i];
-    for(int j = 7; j >= 0; j--)
-      crc = crc>>1 ^ (crc&1) * (table[j] << j);
-  }
-  return crc;
-}
-
 void ARM7TDMI::main() {
   if(auto card = slot1.card) {
     uint32 ndsCode = card->rom.read(0x0c, Word);
@@ -120,7 +108,7 @@ void ARM7TDMI::main() {
     // User settings area - nickname, birthday, favorite color etc.
     for(unsigned i = 0; i < 2; i++) {
       uint32 expected = userData[i][0x72] | userData[i][0x73]<<8;
-      uint32 actual   = crc16(userData[i], 0x70, 0xffff);
+      uint32 actual   = crc16(userData[i], 0x70);
       
       if(expected != actual)
         print("Warning: User settings #",i,":    crc is ",

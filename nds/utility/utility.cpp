@@ -12,6 +12,8 @@
 namespace NintendoDS {
 
 using namespace nall;
+
+#include "crc16.cpp"
 #include "sha1.cpp"
 
 static string hexfrombase64(string s) {
@@ -50,9 +52,9 @@ static string utf8fromUcs2(uint8_t *data) {
   return s;
 }
 
-static void convertIcon(string outPath, uint8_t* banner) {
-  uint8_t* bitmap  = banner + 0x020;  // 4x4 x 4bpp tiles
-  uint8_t* palette = banner + 0x220;  // 16 x RGB555
+static void convertIcon(string outPath, uint8_t* data) {
+  uint8_t* bitmap  = data + 0x000;  // 4x4 x 4bpp tiles
+  uint8_t* palette = data + 0x200;  // 16 x RGB555
   
   uint32_t pixels[32*32];
   uint32_t outpal[16] = {0};
@@ -252,22 +254,86 @@ string findManifest(string imagePath, string name, bool hash) {
   return findManifest(image.data(), image.size(), name, hash);
 }
 
+// A quick sanity check, mostly so we don't import complete junk.
+bool validateHeader(const stream& s) {
+  auto rangeCheck = [&](
+    uint32_t destOffset, uint32_t destSize,
+    uint32_t srcOffset, uint32_t srcSize)
+  -> bool {
+    return srcOffset           - destOffset <= destSize
+        && srcOffset + srcSize - destOffset <= destSize;
+  };
+  uint8_t headerData[0x170];
+  
+  s.seek(0x000);   s.read(headerData, 0x170);
+  s.seek(0x014);   uint8_t chipSize = s.readl(1);
+  s.seek(0x020);
+  uint32_t arm9offset   = s.readl(4),  arm9entry  = s.readl(4);
+  uint32_t arm9load     = s.readl(4),  arm9size   = s.readl(4);
+  uint32_t arm7offset   = s.readl(4),  arm7entry  = s.readl(4);
+  uint32_t arm7load     = s.readl(4),  arm7size   = s.readl(4);
+  uint32_t fntOffset    = s.readl(4),  fntSize    = s.readl(4);
+  uint32_t fatOffset    = s.readl(4),  fatSize    = s.readl(4);
+  uint32_t arm9ovOffset = s.readl(4),  arm9ovSize = s.readl(4);
+  uint32_t arm7ovOffset = s.readl(4),  arm7ovSize = s.readl(4);
+  
+  s.seek(0x068);   uint32_t bannerOffset = s.readl(4);
+  s.seek(0x080);   uint32_t endOffset    = s.readl(4);
+  s.seek(0x15c);
+  uint16_t logoCrc      = s.readl(2);
+  uint16_t headerCrc    = s.readl(2);
+  
+  // Some homebrew have garbage here..
+  endOffset = s.size();
+  
+  return chipSize < 16 
+    && arm7size >= 4 && arm9size >= 4
+    && endOffset <= s.size()
+    && endOffset <= (0x20000 << chipSize)
+    && headerCrc == crc16(headerData + 0x000, 0x15e)
+    && logoCrc   == crc16(headerData + 0x0c0, 0x09c)
+    
+    && (rangeCheck(0x200, endOffset, bannerOffset, 0x840) || !bannerOffset)
+    && (rangeCheck(0x200, endOffset, fntOffset, fntSize) || !fntOffset && !fntSize)
+    && (rangeCheck(0x200, endOffset, fatOffset, fatSize) || !fatOffset && !fatSize)
+    && (rangeCheck(0x200, endOffset, arm9ovOffset, arm9ovSize) || !arm9ovOffset && !arm9ovSize)
+    && (rangeCheck(0x200, endOffset, arm7ovOffset, arm7ovSize) || !arm7ovOffset && !arm7ovSize)
+    &&  rangeCheck(0x200, endOffset, arm9offset, arm9size)
+    &&  rangeCheck(0x200, endOffset, arm7offset, arm7size)
+    
+    &&  rangeCheck(0x02000000, 0x023bfe00, arm9load, arm9size)
+    && (rangeCheck(0x02000000, 0x023bfe00, arm7load, arm7size)
+     || rangeCheck(0x037f8000, 0x03807e00, arm7load, arm7size))
+    
+    &&  rangeCheck(0x02000000, 0x023bfe00, arm9entry, 4)
+    && (rangeCheck(0x02000000, 0x023bfe00, arm7entry, 4)
+     || rangeCheck(0x037f8000, 0x03807e00, arm7entry, 4));
+}
+
+
 bool importROMImage(string& container, string libraryPath, string sourcePath) {
   file image; image.open(sourcePath, file::mode::read);
   
   image.seek(0x68);
   
   uint32_t bannerOffset = image.readl(4);
-  uint8_t  bannerData[0xa00];
+  image.seek(bannerOffset);
+  
+  uint16_t bannerVersion     = image.readl(2);
+  uint16_t bannerCrc         = image.readl(2);
+  uint16_t bannerCrc2        = image.readl(2);
+  uint8_t  bannerData[0xa00] = {0};
+  
+  image.seek(bannerOffset + 0x20);
+  image.read(bannerData, bannerVersion > 1? 0x940 : 0x840);
+  image.close();
+  
+  bool     bannerValid = bannerOffset && bannerCrc == crc16(bannerData, 0x820);
   uint8_t  bannerTextBuf[0x100+2] = {0};
   
-  if(bannerOffset) {
-    image.seek(bannerOffset);
-    image.read(bannerData, sizeof bannerData);
-    image.close();
-    
+  if(bannerValid) {
     // Not sure if this is UCS-2 or full UTF-16.
-    memcpy(bannerTextBuf, bannerData + 0x340, 0x100);  // UCS-2
+    memcpy(bannerTextBuf, bannerData + 0x320, 0x100);  // UCS-2
   }
   lstring bannerText = string(utf8fromUcs2(bannerTextBuf)).split("\n");
   string bannerTitle = bannerText(0).trim();
@@ -283,7 +349,7 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
   
   string manifest = findManifest(sourcePath, defaultName, true);
   auto elem = Markup::Document(manifest);
-  print("Manifest:\n",manifest);
+  print("Manifest:\n",manifest,"\n");
   string name   = elem["title"].text();        // Title "The Legend of Foo"
   string folder = elem["title/file"].text();   //   eg. "Legend of Foo, The"
   string id     = elem["title/id"].text();
@@ -343,9 +409,6 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
 #if defined(_WIN32)
   PathMakeSystemFolder(utf16_t(container));
   
-  if(bannerOffset)
-    convertIcon({container, "banner.ico"}, bannerData);
-  
   file ini; ini.open({container, "desktop.ini"}, file::mode::write);
   ini.print("[.ShellClassInfo]\n"
             "ConfirmFileOp=0\n"
@@ -353,6 +416,8 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
             "IconIndex=0\n"
             "InfoTip=",bannerExtra? bannerExtra : bannerSubTitle,"\n");
 #endif
+  if(bannerValid)
+    convertIcon({container, "banner.ico"}, bannerData);
   return true;
 }
 

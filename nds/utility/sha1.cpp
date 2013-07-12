@@ -19,7 +19,7 @@ template<int M> static inline void sha1round(uint32_t *t, uint32_t w) {
   t[0] = w;
 }
 
-static string sha1(uint8_t *data, uint64_t size) {
+string sha1(uint8_t *data, uint64_t size) {
   string result;
   sha1ctx hash  = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0};
   int64_t remain = size *= 8;

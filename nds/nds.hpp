@@ -9,9 +9,15 @@
 #include <libco/libco.h>
 
 #include <nall/base64.hpp>
+#include <nall/file.hpp>
 #include <nall/filemap.hpp>
+#include <nall/directory.hpp>
 #include <nall/map.hpp>
 #include <nall/set.hpp>
+#include <nall/stdint.hpp>
+#include <nall/stream.hpp>
+#include <nall/string.hpp>
+#include <nall/vector.hpp>
 
 namespace NintendoDS {
   enum : unsigned {

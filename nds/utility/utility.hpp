@@ -1,6 +1,7 @@
 #ifndef UTILTIY_HPP
 #define UTILITY_HPP
 
+#ifndef NDS_HPP
 #include <nall/base64.hpp>
 #include <nall/file.hpp>
 #include <nall/filemap.hpp>
@@ -8,12 +9,17 @@
 #include <nall/map.hpp>
 #include <nall/set.hpp>
 #include <nall/stdint.hpp>
+#include <nall/stream.hpp>
 #include <nall/string.hpp>
 #include <nall/vector.hpp>
 
-#ifndef NDS_HPP
 namespace NintendoDS {
 #endif
+
+uint16_t crc16(uint8_t* data, unsigned size, uint16_t initial = ~0);
+nall::string sha1(uint8_t *data, uint64_t size);
+
+bool validateHeader(const nall::stream& fp);
 
 void loadDatabase(nall::string markup);
 
