@@ -58,10 +58,10 @@ obj/resource.o: $(ui)/resource.rc
 .PHONY: data/resources.zip
 
 data/resources.zip:
-	cd data/resources; zip -9qr ../resources.zip .; cd ../..
+	cd data/resources; zip -9qr ../../obj/resources.zip .
 
 obj/data-resources.o: data/resources.zip
-	ld -r -b binary -o $@ $<
+	cd obj; ld -r -b binary -o data-resources.o resources.zip
 
 
 # targets

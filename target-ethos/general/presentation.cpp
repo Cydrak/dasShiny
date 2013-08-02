@@ -182,7 +182,7 @@ void Presentation::bootstrap() {
 }
 
 void Presentation::loadShaders() {
-  string pathname = program->path("Video Shaders/");
+  string pathname = program->loadPath("Video Shaders/");
   lstring files = directory::files(pathname);
   for(auto &filename : files) {
     lstring name = string{filename}.split(".");

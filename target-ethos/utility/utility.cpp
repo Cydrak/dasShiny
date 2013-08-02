@@ -75,7 +75,7 @@ void Utility::loadMedia(Emulator::Interface *emulator, Emulator::Interface::Medi
 void Utility::loadMedia(Emulator::Interface *emulator, Emulator::Interface::Media &media, const string &pathname) {
   unload();
   setInterface(emulator);
-  path(0) = program->path({media.name, ".sys/"});
+  path(0) = {media.name, ".sys/"};
   path(media.id) = pathname;
   this->pathname.append(pathname);
 
@@ -99,17 +99,42 @@ void Utility::loadRequest(unsigned id, const string &name, const string &type) {
 
 //request from emulation core to load non-volatile media file
 void Utility::loadRequest(unsigned id, const string &path) {
-  string pathname = {this->path(system().group(id)), path};
-  if(file::exists(pathname) == false) return;
-  mmapstream stream(pathname);
-  return system().load(id, stream);
+  string pathname = {pathRequest(system().group(id)), path};
+  
+  // First try loading from a folder as normal.
+  if(file::exists(pathname)) {
+    mmapstream stream(pathname);
+    return system().load(id, stream);
+  }
+  // Otherwise, if system folder, look for a resource.
+  if(system().group(id) == 0) {
+    lstring lpath = this->path(system().group(id)).split("/");
+    pathname = {lpath(lpath.size() - 2),"/", path};
+    
+    if(auto contents = program->getUserResource(pathname)) {
+      vectorstream stream(contents());
+      return system().load(id, stream);
+    }
+  }
 }
 
 //request from emulation core to save non-volatile media file
 void Utility::saveRequest(unsigned id, const string &path) {
-  string pathname = {this->path(system().group(id)), path};
+  string pathname = {pathRequest(system().group(id)), path};
   filestream stream(pathname, file::mode::write);
   return system().save(id, stream);
+}
+
+//request to return path that would be loaded or saved.
+//Note that group(id) isn't called; this uses the group directly.
+string Utility::pathRequest(unsigned group) {
+  string pathname = this->path(group);
+  
+  // Substitute correct system folder
+  if(group == 0)
+    pathname = program->savePath(pathname);
+  
+  return pathname;
 }
 
 void Utility::connect(unsigned port, unsigned device) {

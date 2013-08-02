@@ -58,7 +58,7 @@ void Browser::synchronize() {
 }
 
 void Browser::saveConfiguration() {
-  config.save(program->path("paths.cfg"));
+  config.save(program->savePath("paths.cfg"));
 }
 
 void Browser::bootstrap() {
@@ -90,8 +90,8 @@ void Browser::bootstrap() {
   config.append(import.path, "Import");
   config.append(import.path, "Import::selection");
 
-  config.load(program->path("paths.cfg"));
-  config.save(program->path("paths.cfg"));
+  config.load(program->loadPath("paths.cfg"));
+  config.save(program->savePath("paths.cfg"));
 }
 
 string Browser::select(const string& title) {

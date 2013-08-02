@@ -49,9 +49,13 @@ struct Program {
   string monospaceFont;
   
   unzip resource;
-
+  
+  optional<vector<uint8>> getResource(string path);
+  optional<vector<uint8>> getUserResource(string path);
+  
   bool focused();
-  string path(const string &filename, bool forwriting = false);
+  string loadPath(const string &filename);
+  string savePath(const string &filename);
   void main();
   void bootstrap();
   Program(int argc, char **argv);

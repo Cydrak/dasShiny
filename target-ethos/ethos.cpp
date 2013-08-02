@@ -15,10 +15,30 @@ bool Program::focused() {
   return config->input.focusAllow || presentation->focused();
 }
 
-string Program::path(const string &filename, bool forWriting) {
-  string path = {basepath, filename};
-  if(file::exists(path)) return path;
-  if(directory::exists(path)) return path;
+optional<vector<uint8>> Program::getResource(string rpath) {
+  for(auto &file : resource.file)
+    if(file.name == rpath)
+      return {true, resource.extract(file)};
+  return {};
+}
+
+optional<vector<uint8>> Program::getUserResource(string rpath) {
+  string filepath = program->loadPath(rpath);
+  if(file::exists(filepath))
+    return {true, file::read(filepath)};
+  
+  return getResource(rpath);
+}
+
+string Program::loadPath(const string &filename) {
+  string path = {userpath, filename};
+  if(file::exists(path) || directory::exists(path)) return path;
+  return {basepath, filename};
+}
+
+string Program::savePath(const string &filename) {
+  string path = {userpath, filename};
+  if(file::exists(path) || directory::exists(path)) return path;
   return {userpath, filename};
 }
 
@@ -41,6 +61,12 @@ Program::Program(int argc, char **argv) {
   pause = false;
   autopause = false;
 
+  extern char _binary_resources_zip_start[];
+  extern char _binary_resources_zip_size[];
+  
+  resource.open((uint8_t*)_binary_resources_zip_start,
+                (size_t)_binary_resources_zip_size);
+  
   basepath = dir(realpath(argv[0]));
   userpath = {nall::configpath(), "dasShiny/"};
   directory::create(userpath);
@@ -49,9 +75,13 @@ Program::Program(int argc, char **argv) {
   emulator.append(new NintendoDS::Interface);
   for(auto &system : emulator)
     system->bind = interface;
-
-  string dbPath = program->path("Nintendo DS.sys/database.bml");
-  NintendoDS::loadDatabase(string::read(dbPath));
+  
+  string sysfolder = program->savePath("Nintendo DS.sys/");
+  if(!directory::exists(sysfolder))
+    directory::create(sysfolder);
+  
+  if(auto db = program->getUserResource("Nintendo DS.sys/database.bml"))
+    NintendoDS::loadDatabase(vectorstream(db()).text());
 
   active = nullptr;
 
@@ -72,15 +102,6 @@ Program::Program(int argc, char **argv) {
     monospaceFont = Font::monospace(8);
   }
   
-  extern char _binary_data_resources_zip_start[];
-  extern char _binary_data_resources_zip_size[];
-  
-  resource.open((uint8_t*)_binary_data_resources_zip_start,
-                (size_t)_binary_data_resources_zip_size);
-
-  //for(auto &f : resource.file)
-  //  print(f.name,"\n");
-
   config = new Configuration;
   video.driver(config->video.driver);
   audio.driver(config->audio.driver);

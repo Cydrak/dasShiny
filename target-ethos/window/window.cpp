@@ -12,8 +12,8 @@ void WindowManager::loadGeometry() {
   for(auto &window : windowList) {
     config.append(window.geometry, window.name);
   }
-  config.load(program->path("geometry.cfg"));
-  config.save(program->path("geometry.cfg"));
+  config.load(program->loadPath("geometry.cfg"));
+  config.save(program->savePath("geometry.cfg"));
   for(auto &window : windowList) {
     window.window->setGeometry(window.geometry);
   }
@@ -23,7 +23,7 @@ void WindowManager::saveGeometry() {
   for(auto &window : windowList) {
     window.geometry = window.window->geometry().text();
   }
-  config.save(program->path("geometry.cfg"));
+  config.save(program->savePath("geometry.cfg"));
 }
 
 void WindowManager::hideAll() {

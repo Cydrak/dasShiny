@@ -96,7 +96,7 @@ unsigned Interface::dipSettings(const Markup::Node &node) {
 }
 
 string Interface::path(unsigned group) {
-  return utility->path(group);
+  return utility->pathRequest(group);
 }
 
 string Interface::server() {

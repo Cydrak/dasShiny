@@ -247,7 +247,7 @@ int16_t InputManager::poll(unsigned scancode) {
 }
 
 void InputManager::saveConfiguration() {
-  config.save(program->path("input.cfg"));
+  config.save(program->savePath("input.cfg"));
 }
 
 InputManager::InputManager() {
@@ -287,9 +287,14 @@ void InputManager::bootstrap() {
   }
 
   appendHotkeys();
-
-  config.load(program->path("input.cfg"));
-  config.save(program->path("input.cfg"));
-
+  
+  string path = program->savePath("input.cfg");
+  
+  if(!file::exists(path))
+    if(auto defaults = program->getResource("User defaults/input.cfg"))
+      file::write(path, vectorstream(defaults()).text());
+  
+  config.load(path);
+  config.save(path);
   bind();
 }
