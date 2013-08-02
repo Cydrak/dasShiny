@@ -28,8 +28,9 @@ void ARMCore::armBranch(uint1 link, uint1 exch, int26 offset) {
 }
 
 void ARMCore::armBranchEx(uint1 link, uint4 irm) {
+  uint32 target = r[irm];
   if(link) r[14] = r[15] - 4;
-  branch(r[irm] & 1, r[irm]);
+  branch(target & 1, target);
 }
 
 void ARMCore::armClz(uint4 ird, uint4 irm) {
