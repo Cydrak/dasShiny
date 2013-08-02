@@ -55,7 +55,9 @@ struct Interface : Emulator::Interface {
   void power();
   void run();
   void videoRefresh(const uint32_t *data, unsigned pitch, unsigned width, unsigned height);
-
+  
+  void keyboardEvent(unsigned type, unsigned long code);
+  
   serializer serialize();
   bool unserialize(serializer&);
 

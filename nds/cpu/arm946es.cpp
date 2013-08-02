@@ -505,6 +505,11 @@ uint32 ARM946ES::readReg(uint32 addr, uint32 size) {
   case 0x0698: case 0x069c: case 0x06a0:
     return gpu.regLightMatrix((addr - 0x4000680)/4);
     
+  // Special registers unique to dasShiny
+  case 0xde00: return system.regKeyboardEvents();
+  case 0xde14: return system.regHostTime(0);
+  case 0xde18: return system.regHostTime(1);
+  case 0xde1c: return system.regHostTime(2);
   }
   return CPUCore::readReg(addr, size);
 }
@@ -676,6 +681,10 @@ void ARM946ES::writeReg(uint32 addr, uint32 size, uint32 data) {
   
   // zelda gallery writes 0x2468ace0 here - ???
   case 0x0640: break;
+  
+  // Special registers unique to dasShiny
+  case 0xde00: return system.regKeyboardEvents(data);
+  case 0xde10: return system.regReadHostTime();
   }
   return CPUCore::writeReg(addr, size, data);
 }

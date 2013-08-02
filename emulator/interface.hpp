@@ -112,7 +112,13 @@ struct Interface {
   //debugger functions
   virtual bool tracerEnable(bool) { return false; }
   virtual void exportMemory() {}
-
+  
+  virtual void keyboardEvent(unsigned type, unsigned long code) {}
+  
+  enum {
+    KeyNoEvent, keyUpEvent, KeyDownEvent
+  };
+  
   Interface() : bind(nullptr) {}
 };
 

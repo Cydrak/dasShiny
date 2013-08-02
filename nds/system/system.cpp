@@ -291,6 +291,35 @@ void System::regVmap(unsigned index, uint32 data, uint32 mask) {
 
 
 
+uint32 System::regKeyboardEvents() {
+  return keyboardEnabled && keyboardEvents.size()? keyboardEvents.take(0) : 0;
+}
+
+void System::regKeyboardEvents(uint32 enable) {
+  keyboardEnabled = enable == 0xda5;
+  keyboardEvents.reset();
+}
+
+void System::regReadHostTime() {
+  struct timeval tv = {};
+  gettimeofday(&tv, 0);
+  hostTime = *localtime(&tv.tv_sec);
+  hostUsec = tv.tv_usec;
+}
+
+uint32 System::regHostTime(int index) {
+  if(index == 0)
+    return hostTime.tm_year+1900<<16 | hostTime.tm_mon+1<<8 | hostTime.tm_mday<<0;
+  if(index == 1)
+    return hostTime.tm_hour<<16 | hostTime.tm_min<<8 | hostTime.tm_sec<<0;
+  if(index == 2)
+    return hostUsec;
+  
+  return 0;
+}
+
+
+
 void System::loadArm7Bios(const stream& stream) {
   delete[] arm7.bios.data;
   
@@ -503,6 +532,11 @@ void System::power() {
   for(auto &r : vmap.regs) r = 0x00;
   clearVmap();
   memset(vmap.dirty, 0xff, sizeof vmap.dirty);
+  
+  keyboardEnabled = false;
+  keyboardEvents.reset();
+  memset(&hostTime, 0, sizeof hostTime);
+  hostUsec = 0;
   
   arm9.config.arm9 = true;
   arm9.config.arm7 = false;

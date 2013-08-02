@@ -1,4 +1,5 @@
 #include "eventqueue.hpp"
+#include <sys/time.h>
 
 typedef function<void()> Action;
 typedef EventQueue_of<Action> EventQueue;
@@ -152,6 +153,9 @@ struct System {
   
   uint16 unmappedVram[0x2000];
   
+  struct tm hostTime;
+  uint32 hostUsec;
+  
   struct VRAMConfig {
     uint1 enable;
     uint2 offset;
@@ -204,13 +208,21 @@ struct System {
     uint8 dirty[(512 + 96 + 48)*1024 / 256];
   } vmap;
   
-  
   void clearVmap();
   void updateVmap();
   void mapVram(VRAMMapping* loc, uint8 *dirtyBits, unsigned npages, HalfMemory& bank);
   
   uint32 regVmap(unsigned index);
   void regVmap(unsigned index, uint32 data, uint32 mask);
+  
+  bool keyboardEnabled;
+  nall::vector<uint32> keyboardEvents;
+  
+  void regKeyboardEvents(uint32 enable);
+  uint32 regKeyboardEvents();
+  
+  void regReadHostTime();
+  uint32 regHostTime(int index);
   
   void loadArm7Bios(const stream&);
   void loadArm9Bios(const stream&);

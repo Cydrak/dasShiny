@@ -287,6 +287,13 @@ void Interface::videoRefresh(const uint32_t *data, unsigned pitch, unsigned widt
   return bind->videoRefresh(pixels, 256*4, 256, 384);
 }
 
+void Interface::keyboardEvent(unsigned type, unsigned long code) {
+  uint32 event = type<<24 | code;
+  
+  if(system.keyboardEvents.size() < 256)
+    system.keyboardEvents.append(event);
+}
+
 
 Interface::Interface() {
   interface = this;

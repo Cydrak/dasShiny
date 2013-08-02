@@ -232,6 +232,13 @@ void InputManager::poll() {
 
   for(unsigned n = 0; n < Scancode::Limit; n++) {
     if(scancode[0][n] != scancode[1][n]) {
+      if(n < Keyboard::Scancode::Limit) {
+        if(program->active && presentation->focused())
+          program->active->keyboardEvent(scancode[activeScancode][n]
+              ? Emulator::Interface::KeyDownEvent
+              : Emulator::Interface::keyUpEvent,
+              n);
+      }
       if(settings->focused()) {
         inputSettings->inputEvent(n, scancode[activeScancode][n]);
         hotkeySettings->inputEvent(n, scancode[activeScancode][n]);
@@ -253,6 +260,7 @@ void InputManager::saveConfiguration() {
 InputManager::InputManager() {
   inputManager = this;
   activeScancode = 0;
+  memset(scancode, 0, sizeof scancode);
   bootstrap();
 }
 
