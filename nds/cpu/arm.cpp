@@ -227,5 +227,9 @@ void ARMCore::armBlock(uint5 opcode, uint4 irn, uint16 rlist) {
     addr += 4;
   }
   if(user) swapBank(mode);
-  if(ld && (rlist & 1<<15)) branch(r[15] & 1, r[15]);
+  
+  if(ld && (rlist & 1<<15)) {
+    if(opcode & 4) writeCpsr(spsr(), 0xf);
+    branch(r[15] & 1, r[15]);
+  }
 }
