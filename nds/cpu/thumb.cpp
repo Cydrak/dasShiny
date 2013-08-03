@@ -107,6 +107,11 @@ void ARMCore::thumbBlock(uint4 opcode, uint3 irn, uint8 rlist) {
     up = ld;
     if(irn & 1) regs |= (1 << 14+ld);
   }
+  else if(ld && (regs & 1<<irn)) {
+    // Special case: ldmia Rn!, {..Rn..} is unpredictable in ARM mode,
+    //   but for THUMB it's actually specified to not write back!
+    writeback = false;
+  }
   
   uint32 addr = rn, base = rn, size = 4*bit::count(regs);
   if(!up) addr -= size;
