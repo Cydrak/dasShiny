@@ -15,17 +15,37 @@ string Utility::libraryPath() {
   return path;
 }
 
-void Utility::importMedia(string pathname) {
+string Utility::importMedia(string pathname) {
   string container;
-  print("Importing ",pathname,"\n");
+  
+  if(file::exists(pathname) && file::size(pathname) <= 0x10000) {
+    // Check if it's one of the system ROMs
+    if(auto manifest = program->getUserResource("Nintendo DS.sys/manifest.bml")) {
+      auto elem     = Markup::Document(vectorstream(manifest()).text());
+      auto contents = file::read(pathname);
+      auto hash     = sha256(contents.data(), contents.size());
+      auto sysfolder = program->savePath("Nintendo DS.sys/");
+      
+      if(hash == elem["system/memory/arm9/sha256"].text()) {
+        string dest = {sysfolder, elem["system/memory/arm9/data"].text()};
+        file::write(dest, contents);
+        return "<system>";
+      }
+      else if(hash == elem["system/memory/arm7/sha256"].text()) {
+        string dest = {sysfolder, elem["system/memory/arm7/data"].text()};
+        file::write(dest, contents);
+        return "<system>";
+      }
+    }
+  }
   
   if(!NintendoDS::validateHeader(filestream(pathname, file::mode::read))) {
     MessageWindow().setTitle("Import failed").setText(
       {"Couldn't import ",pathname,".\n"
        "\n"
-       "This file doesn't look like a Nintendo DS title.\n"
-       "If it is, the header might be damaged or ill-formed."})
+       "This file doesn't look like a Nintendo DS title.\n"})
       .error();
+    return "";
   }
   else if(!NintendoDS::importROMImage(container, libraryPath(), pathname)) {
     MessageWindow().setTitle("Import failed").setText(
@@ -33,11 +53,9 @@ void Utility::importMedia(string pathname) {
        "\n"
        "Check to see if you've got sufficient permissions and disk space."})
       .error();
+    return "";
   }
-  else {
-    auto e = program->emulator[0];
-    loadMedia(e, e->media[0], container);
-  }
+  return container;
 }
 
 //load from command-line, etc
@@ -46,9 +64,15 @@ void Utility::loadMedia(string pathname) {
   if(pathname.endswith("/")) pathname.rtrim("/");
 
   //if a filename was provided: convert to game folder and then load
-  if(!directory::exists(pathname) && file::exists(pathname))
-    return importMedia(pathname);
-
+  if(!directory::exists(pathname) && file::exists(pathname)) {
+    auto e = program->emulator[0];
+    if(auto container = importMedia(pathname)) {
+      utility->showMessage({"Imported ",pathname,"."});
+      if(container != "<system>")
+        loadMedia(e, e->media[0], container);
+    }
+    return;
+  }
   if(!directory::exists(pathname)) return;
   string type = extension(pathname);
 

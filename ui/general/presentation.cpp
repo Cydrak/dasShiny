@@ -46,7 +46,9 @@ Presentation::Presentation() : active(nullptr) {
   setBackgroundColor({0, 0, 0});
   setMenuVisible();
   setStatusVisible();
-
+  setDroppable();
+  viewport.setDroppable();
+  
   loadMenu.setText("Library");
     loadImport.setText("Import Game ...");
   settingsMenu.setText("Settings");
@@ -99,10 +101,38 @@ Presentation::Presentation() : active(nullptr) {
       Application::quit();
     }
   };
-
+  
+  onDrop = viewport.onDrop = [&](lstring paths) {
+    if(paths.size() == 1) {
+      // Single path - might be file or folder.
+      utility->loadMedia(paths[0]);
+    }
+    else {
+      // Don't try to import folders.
+      for(auto &path : paths)
+        if(directory::exists(path))
+          return;
+      
+      unsigned numImported = 0;
+      
+      for(auto &path : paths) {
+        if(auto container = utility->importMedia(path)) {
+          if(container != "<system>") numImported++;
+        }
+        else break;
+      }
+      if(numImported > 0)
+        utility->showMessage({"Imported ",numImported," titles."});
+    }
+  };
+  
   loadImport.onActivate = [&] {
     string path = browser->select("Import game");
-    if(path) utility->importMedia(path);
+    if(path) {
+      auto e = program->emulator[0];
+      if(auto container = utility->importMedia(path))
+        utility->loadMedia(e, e->media[0], container);
+    }
   };
 
   shaderNone.onActivate = [&] { uiConfig->video.shader = "None"; utility->updateShader(); };

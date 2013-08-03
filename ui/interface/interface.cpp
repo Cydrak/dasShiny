@@ -72,7 +72,7 @@ void Interface::videoRefresh(const uint32_t *data, unsigned pitch, unsigned widt
   time(&current);
   if(current != previous) {
     previous = current;
-    utility->setStatusText({"FPS: ", frameCounter});
+    //utility->setStatusText({"FPS: ", frameCounter});
     frameCounter = 0;
   }
 }
