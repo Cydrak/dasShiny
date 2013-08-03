@@ -42,25 +42,25 @@ OutputSettings::OutputSettings() {
     audioLayout.append(resampler, {~0, 0});
   append(volume, {~0, 0});
 
-  saturation.slider.setPosition(config->video.saturation);
-  gamma.slider.setPosition(config->video.gamma - 100);
-  luminance.slider.setPosition(config->video.luminance);
+  saturation.slider.setPosition(uiConfig->video.saturation);
+  gamma.slider.setPosition(uiConfig->video.gamma - 100);
+  luminance.slider.setPosition(uiConfig->video.luminance);
 
-  switch(config->audio.frequency) { default:
+  switch(uiConfig->audio.frequency) { default:
   case 32000: frequency.setSelection(0); break;
   case 44100: frequency.setSelection(1); break;
   case 48000: frequency.setSelection(2); break;
   case 96000: frequency.setSelection(3); break;
   }
-  switch(config->audio.latency) { default:
+  switch(uiConfig->audio.latency) { default:
   case  20: latency.setSelection(0); break;
   case  40: latency.setSelection(1); break;
   case  60: latency.setSelection(2); break;
   case  80: latency.setSelection(3); break;
   case 100: latency.setSelection(4); break;
   }
-  resampler.setSelection(config->audio.resampler);
-  volume.slider.setPosition(config->audio.volume);
+  resampler.setSelection(uiConfig->audio.resampler);
+  volume.slider.setPosition(uiConfig->audio.volume);
 
   synchronize();
 
@@ -70,33 +70,33 @@ OutputSettings::OutputSettings() {
 }
 
 void OutputSettings::synchronize() {
-  config->video.saturation = saturation.slider.position();
-  config->video.gamma = 100 + gamma.slider.position();
-  config->video.luminance = luminance.slider.position();
+  uiConfig->video.saturation = saturation.slider.position();
+  uiConfig->video.gamma = 100 + gamma.slider.position();
+  uiConfig->video.luminance = luminance.slider.position();
 
-  saturation.value.setText({config->video.saturation, "%"});
-  gamma.value.setText({config->video.gamma, "%"});
-  luminance.value.setText({config->video.luminance, "%"});
+  saturation.value.setText({uiConfig->video.saturation, "%"});
+  gamma.value.setText({uiConfig->video.gamma, "%"});
+  luminance.value.setText({uiConfig->video.luminance, "%"});
 
   if(program->active) system().paletteUpdate();
 
   switch(frequency.selection()) {
-  case 0: config->audio.frequency = 32000; break;
-  case 1: config->audio.frequency = 44100; break;
-  case 2: config->audio.frequency = 48000; break;
-  case 3: config->audio.frequency = 96000; break;
+  case 0: uiConfig->audio.frequency = 32000; break;
+  case 1: uiConfig->audio.frequency = 44100; break;
+  case 2: uiConfig->audio.frequency = 48000; break;
+  case 3: uiConfig->audio.frequency = 96000; break;
   }
   switch(latency.selection()) {
-  case 0: config->audio.latency =  20; break;
-  case 1: config->audio.latency =  40; break;
-  case 2: config->audio.latency =  60; break;
-  case 3: config->audio.latency =  80; break;
-  case 4: config->audio.latency = 100; break;
+  case 0: uiConfig->audio.latency =  20; break;
+  case 1: uiConfig->audio.latency =  40; break;
+  case 2: uiConfig->audio.latency =  60; break;
+  case 3: uiConfig->audio.latency =  80; break;
+  case 4: uiConfig->audio.latency = 100; break;
   }
-  config->audio.resampler = resampler.selection();
-  config->audio.volume = volume.slider.position();
+  uiConfig->audio.resampler = resampler.selection();
+  uiConfig->audio.volume = volume.slider.position();
 
-  volume.value.setText({config->audio.volume, "%"});
+  volume.value.setText({uiConfig->audio.volume, "%"});
 
   utility->synchronizeRuby();
 }

@@ -13,6 +13,17 @@
   return self;
 }
 
+-(NSDragOperation) draggingEntered:(id<NSDraggingInfo>)sender {
+  return DropPathsOperation(sender);
+}
+
+-(BOOL) performDragOperation:(id<NSDraggingInfo>)sender {
+  lstring paths = DropPaths(sender);
+  if(paths.empty()) return NO;
+  if(canvas->onDrop) canvas->onDrop(paths);
+  return YES;
+}
+
 -(void) mouseButton:(NSEvent*)event down:(BOOL)isDown {
   if(auto &callback = isDown ? canvas->onMousePress : canvas->onMouseRelease) {
     switch([event buttonNumber]) {
@@ -73,10 +84,20 @@
 
 namespace phoenix {
 
-void pCanvas::setSize(const Size &size) {
+void pCanvas::setDroppable(bool droppable) {
   @autoreleasepool {
-    NSImage *image = [[[NSImage alloc] initWithSize:NSMakeSize(size.width, size.height)] autorelease];
-    NSBitmapImageRep *bitmap = [[[NSBitmapImageRep alloc]
+    if(droppable) {
+      [cocoaCanvas registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+    } else {
+      [cocoaCanvas unregisterDraggedTypes];
+    }
+  }
+}
+
+void pCanvas::setSize(Size size) {
+  @autoreleasepool {
+    NSImage* image = [[[NSImage alloc] initWithSize:NSMakeSize(size.width, size.height)] autorelease];
+    NSBitmapImageRep* bitmap = [[[NSBitmapImageRep alloc]
       initWithBitmapDataPlanes:nil
       pixelsWide:size.width pixelsHigh:size.height
       bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES
@@ -92,9 +113,9 @@ void pCanvas::setSize(const Size &size) {
 
 void pCanvas::update() {
   @autoreleasepool {
-    if(NSBitmapImageRep *bitmap = [[[cocoaView image] representations] objectAtIndex:0]) {
-      uint8_t *target = [bitmap bitmapData];
-      uint32_t *source = canvas.state.data;
+    if(NSBitmapImageRep* bitmap = [[[cocoaView image] representations] objectAtIndex:0]) {
+      uint8_t* target = [bitmap bitmapData];
+      uint32_t* source = canvas.state.data;
 
       for(unsigned n = 0; n < canvas.state.width * canvas.state.height; n++) {
         *target++ = *source >> 16;

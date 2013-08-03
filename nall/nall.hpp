@@ -21,7 +21,9 @@
 #include <nall/file.hpp>
 #include <nall/filemap.hpp>
 #include <nall/function.hpp>
+#include <nall/group.hpp>
 #include <nall/gzip.hpp>
+#include <nall/hashset.hpp>
 #include <nall/http.hpp>
 #include <nall/image.hpp>
 #include <nall/inflate.hpp>
@@ -29,6 +31,7 @@
 #include <nall/intrinsics.hpp>
 #include <nall/invoke.hpp>
 #include <nall/map.hpp>
+#include <nall/matrix.hpp>
 #include <nall/png.hpp>
 #include <nall/property.hpp>
 #include <nall/random.hpp>

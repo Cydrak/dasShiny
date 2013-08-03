@@ -1,145 +1,149 @@
 #ifndef NALL_SERIALIZER_HPP
 #define NALL_SERIALIZER_HPP
 
+//serializer: a class designed to save and restore the state of classes.
+//
+//benefits:
+//- data() will be portable in size (it is not necessary to specify type sizes.)
+//- data() will be portable in endianness (always stored internally as little-endian.)
+//- one serialize function can both save and restore class states.
+//
+//caveats:
+//- only plain-old-data can be stored. complex classes must provide serialize(serializer&);
+//- floating-point usage is not portable across different implementations
+
 #include <type_traits>
 #include <utility>
 #include <nall/stdint.hpp>
 #include <nall/utility.hpp>
 
 namespace nall {
-  //serializer: a class designed to save and restore the state of classes.
-  //
-  //benefits:
-  //- data() will be portable in size (it is not necessary to specify type sizes.)
-  //- data() will be portable in endianness (always stored internally as little-endian.)
-  //- one serialize function can both save and restore class states.
-  //
-  //caveats:
-  //- only plain-old-data can be stored. complex classes must provide serialize(serializer&);
-  //- floating-point usage is not portable across platforms
 
-  class serializer {
-  public:
-    enum mode_t { Load, Save, Size };
+struct serializer;
 
-    mode_t mode() const {
-      return imode;
+template<typename T>
+struct has_serialize {
+  template<typename C> static char test(decltype(std::declval<C>().serialize(std::declval<serializer&>()))*);
+  template<typename C> static long test(...);
+  static const bool value = sizeof(test<T>(0)) == sizeof(char);
+};
+
+struct serializer {
+  enum mode_t { Load, Save, Size };
+
+  mode_t mode() const {
+    return _mode;
+  }
+
+  const uint8_t* data() const {
+    return _data;
+  }
+
+  unsigned size() const {
+    return _size;
+  }
+
+  unsigned capacity() const {
+    return _capacity;
+  }
+
+  template<typename T> serializer& floatingpoint(T& value) {
+    enum { size = sizeof(T) };
+    //this is rather dangerous, and not cross-platform safe;
+    //but there is no standardized way to export FP-values
+    uint8_t* p = (uint8_t*)&value;
+    if(_mode == Save) {
+      for(unsigned n = 0; n < size; n++) _data[_size++] = p[n];
+    } else if(_mode == Load) {
+      for(unsigned n = 0; n < size; n++) p[n] = _data[_size++];
+    } else {
+      _size += size;
     }
+    return *this;
+  }
 
-    const uint8_t* data() const {
-      return idata;
+  template<typename T> serializer& integer(T& value) {
+    enum { size = std::is_same<bool, T>::value ? 1 : sizeof(T) };
+    if(_mode == Save) {
+      for(unsigned n = 0; n < size; n++) _data[_size++] = (uintmax_t)value >> (n << 3);
+    } else if(_mode == Load) {
+      value = 0;
+      for(unsigned n = 0; n < size; n++) value |= (uintmax_t)_data[_size++] << (n << 3);
+    } else if(_mode == Size) {
+      _size += size;
     }
+    return *this;
+  }
 
-    unsigned size() const {
-      return isize;
-    }
+  template<typename T, int N> serializer& array(T (&array)[N]) {
+    for(unsigned n = 0; n < N; n++) operator()(array[n]);
+    return *this;
+  }
 
-    unsigned capacity() const {
-      return icapacity;
-    }
+  template<typename T> serializer& array(T array, unsigned size) {
+    for(unsigned n = 0; n < size; n++) operator()(array[n]);
+    return *this;
+  }
 
-    template<typename T> void floatingpoint(T &value) {
-      enum { size = sizeof(T) };
-      //this is rather dangerous, and not cross-platform safe;
-      //but there is no standardized way to export FP-values
-      uint8_t *p = (uint8_t*)&value;
-      if(imode == Save) {
-        for(unsigned n = 0; n < size; n++) idata[isize++] = p[n];
-      } else if(imode == Load) {
-        for(unsigned n = 0; n < size; n++) p[n] = idata[isize++];
-      } else {
-        isize += size;
-      }
-    }
+  template<typename T> serializer& operator()(T& value, typename std::enable_if<has_serialize<T>::value>::type* = 0) { value.serialize(*this); return *this; }
+  template<typename T> serializer& operator()(T& value, typename std::enable_if<std::is_integral<T>::value>::type* = 0) { return integer(value); }
+  template<typename T> serializer& operator()(T& value, typename std::enable_if<std::is_floating_point<T>::value>::type* = 0) { return floatingpoint(value); }
+  template<typename T> serializer& operator()(T& value, typename std::enable_if<std::is_array<T>::value>::type* = 0) { return array(value); }
+  template<typename T> serializer& operator()(T& value, unsigned size, typename std::enable_if<std::is_pointer<T>::value>::type* = 0) { return array(value, size); }
 
-    template<typename T> void integer(T &value) {
-      enum { size = std::is_same<bool, T>::value ? 1 : sizeof(T) };
-      if(imode == Save) {
-        for(unsigned n = 0; n < size; n++) idata[isize++] = (uintmax_t)value >> (n << 3);
-      } else if(imode == Load) {
-        value = 0;
-        for(unsigned n = 0; n < size; n++) value |= (uintmax_t)idata[isize++] << (n << 3);
-      } else if(imode == Size) {
-        isize += size;
-      }
-    }
+  serializer& operator=(const serializer& s) {
+    if(_data) delete[] _data;
 
-    template<typename T> void array(T &array) {
-      enum { size = sizeof(T) / sizeof(typename std::remove_extent<T>::type) };
-      for(unsigned n = 0; n < size; n++) integer(array[n]);
-    }
+    _mode = s._mode;
+    _data = new uint8_t[s._capacity];
+    _size = s._size;
+    _capacity = s._capacity;
 
-    template<typename T> void array(T array, unsigned size) {
-      for(unsigned n = 0; n < size; n++) integer(array[n]);
-    }
+    memcpy(_data, s._data, s._capacity);
+    return *this;
+  }
 
-    //copy
-    serializer& operator=(const serializer &s) {
-      if(idata) delete[] idata;
+  serializer& operator=(serializer&& s) {
+    if(_data) delete[] _data;
 
-      imode = s.imode;
-      idata = new uint8_t[s.icapacity];
-      isize = s.isize;
-      icapacity = s.icapacity;
+    _mode = s._mode;
+    _data = s._data;
+    _size = s._size;
+    _capacity = s._capacity;
 
-      memcpy(idata, s.idata, s.icapacity);
-      return *this;
-    }
+    s._data = nullptr;
+    return *this;
+  }
 
-    serializer(const serializer &s) : idata(nullptr) {
-      operator=(s);
-    }
+  serializer() = default;
+  serializer(const serializer& s) { operator=(s); }
+  serializer(serializer&& s) { operator=(std::move(s)); }
 
-    //move
-    serializer& operator=(serializer &&s) {
-      if(idata) delete[] idata;
+  serializer(unsigned capacity) {
+    _mode = Save;
+    _data = new uint8_t[capacity]();
+    _size = 0;
+    _capacity = capacity;
+  }
 
-      imode = s.imode;
-      idata = s.idata;
-      isize = s.isize;
-      icapacity = s.icapacity;
+  serializer(const uint8_t* data, unsigned capacity) {
+    _mode = Load;
+    _data = new uint8_t[capacity];
+    _size = 0;
+    _capacity = capacity;
+    memcpy(_data, data, capacity);
+  }
 
-      s.idata = nullptr;
-      return *this;
-    }
+  ~serializer() {
+    if(_data) delete[] _data;
+  }
 
-    serializer(serializer &&s) {
-      operator=(std::move(s));
-    }
-
-    //construction
-    serializer() {
-      imode = Size;
-      idata = nullptr;
-      isize = 0;
-      icapacity = 0;
-    }
-
-    serializer(unsigned capacity) {
-      imode = Save;
-      idata = new uint8_t[capacity]();
-      isize = 0;
-      icapacity = capacity;
-    }
-
-    serializer(const uint8_t *data, unsigned capacity) {
-      imode = Load;
-      idata = new uint8_t[capacity];
-      isize = 0;
-      icapacity = capacity;
-      memcpy(idata, data, capacity);
-    }
-
-    ~serializer() {
-      if(idata) delete[] idata;
-    }
-
-  private:
-    mode_t imode;
-    uint8_t *idata;
-    unsigned isize;
-    unsigned icapacity;
-  };
+private:
+  mode_t _mode = Size;
+  uint8_t* _data = nullptr;
+  unsigned _size = 0;
+  unsigned _capacity = 0;
+};
 
 };
 

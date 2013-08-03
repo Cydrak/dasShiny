@@ -69,7 +69,9 @@ ifeq ($(platform),)
   endif
   
   ifneq ($(filter win cygwin,$(platform)),)
-    ruby     += video.wgl audio.xaudio2 input.rawinput
+    ruby     += video.wgl video.direct3d video.directdraw video.gdi
+    ruby     += audio.xaudio2 audio.directsound
+    ruby     += input.rawinput input.directinput
     
     exe       = .exe
     CC       := gcc -x c -std=gnu99

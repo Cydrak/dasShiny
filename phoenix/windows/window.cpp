@@ -2,36 +2,62 @@ namespace phoenix {
 
 vector<pWindow*> pWindow::modal;
 
+//EnableWindow(hwnd, false) sends WM_KILLFOCUS; deactivating said window
+//EnableWindow(hwnd, true) does not restore lost focus
+//when a modal loop finishes, and the dialog is dismissed, the application loses focus entirely
+//due to anti-focus-stealing code in Windows, SetForegroundWindow() cannot restore lost focus
+//further, GetActiveWindow() returns nothing when all windows have lost focus
+//thus, we must use a focus-stealing hack to reclaim the focus we never intended to dismiss;
+//and we must replicate GetActiveWindow() by scanning the Z-order of windows for this process
+
 void pWindow::updateModality() {
-  for(auto &object : pObject::objects) {
+  //bind thread input to process that currently has input focus
+  auto threadId = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
+  AttachThreadInput(threadId, GetCurrentThreadId(), TRUE);
+
+  pWindow* topMost = nullptr;
+  for(auto& object : pObject::objects) {
     if(dynamic_cast<pWindow*>(object) == nullptr) continue;
-    pWindow *p = (pWindow*)object;
-    if(modal.size() == 0) EnableWindow(p->hwnd, true);
-    else EnableWindow(p->hwnd, modal.find(p));
+    pWindow* p = (pWindow*)object;
+    bool enable = modal.size() == 0 || modal.find(p);
+    if(IsWindowEnabled(p->hwnd) != enable) EnableWindow(p->hwnd, enable);
+    if(enable && p->window.visible()) {
+      if(topMost == nullptr) topMost = p;
+      else if(GetWindowZOrder(p->hwnd) < GetWindowZOrder(topMost->hwnd)) topMost = p;
+    }
   }
+
+  //set input focus on top-most window
+  if(topMost) {
+    SetForegroundWindow(topMost->hwnd);
+    SetActiveWindow(topMost->hwnd);
+  }
+
+  //unbind thread input hook
+  AttachThreadInput(threadId, GetCurrentThreadId(), FALSE);
 }
 
 static const unsigned FixedStyle = WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_BORDER;
 static const unsigned ResizableStyle = WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME;
 
 Window& pWindow::none() {
-  static Window *window = nullptr;
+  static Window* window = nullptr;
   if(window == nullptr) window = new Window;
   return *window;
 }
 
-void pWindow::append(Layout &layout) {
+void pWindow::append(Layout& layout) {
   Geometry geom = window.state.geometry;
   geom.x = geom.y = 0;
   layout.setGeometry(geom);
 }
 
-void pWindow::append(Menu &menu) {
+void pWindow::append(Menu& menu) {
   menu.p.parentWindow = &window;
   updateMenu();
 }
 
-void pWindow::append(Widget &widget) {
+void pWindow::append(Widget& widget) {
   widget.p.parentWindow = &window;
   widget.p.orphan();
 
@@ -43,7 +69,7 @@ void pWindow::append(Widget &widget) {
 Color pWindow::backgroundColor() {
   if(window.state.backgroundColorOverride) return window.state.backgroundColor;
   DWORD color = GetSysColor(COLOR_3DFACE);
-  return { (uint8_t)(color >> 16), (uint8_t)(color >> 8), (uint8_t)(color >> 0), 255 };
+  return {(uint8_t)(color >> 16), (uint8_t)(color >> 8), (uint8_t)(color >> 0), 255u};
 }
 
 bool pWindow::focused() {
@@ -53,7 +79,7 @@ bool pWindow::focused() {
 Geometry pWindow::frameMargin() {
   unsigned style = window.state.resizable ? ResizableStyle : FixedStyle;
   if(window.state.fullScreen) style = 0;
-  RECT rc = { 0, 0, 640, 480 };
+  RECT rc = {0, 0, 640, 480};
   AdjustWindowRect(&rc, style, window.state.menuVisible);
   unsigned statusHeight = 0;
   if(window.state.statusVisible) {
@@ -61,7 +87,7 @@ Geometry pWindow::frameMargin() {
     GetClientRect(hstatus, &src);
     statusHeight = src.bottom - src.top;
   }
-  return { abs(rc.left), abs(rc.top), (rc.right - rc.left) - 640, (rc.bottom - rc.top) + statusHeight - 480 };
+  return {abs(rc.left), abs(rc.top), (rc.right - rc.left) - 640, (rc.bottom - rc.top) + statusHeight - 480};
 }
 
 Geometry pWindow::geometry() {
@@ -82,24 +108,28 @@ Geometry pWindow::geometry() {
   unsigned width = (rc.right - rc.left) - margin.width;
   unsigned height = (rc.bottom - rc.top) - margin.height;
 
-  return { x, y, width, height };
+  return {x, y, width, height};
 }
 
-void pWindow::remove(Layout &layout) {
+void pWindow::remove(Layout& layout) {
 }
 
-void pWindow::remove(Menu &menu) {
+void pWindow::remove(Menu& menu) {
   updateMenu();
 }
 
-void pWindow::remove(Widget &widget) {
+void pWindow::remove(Widget& widget) {
   widget.p.orphan();
 }
 
-void pWindow::setBackgroundColor(const Color &color) {
+void pWindow::setBackgroundColor(Color color) {
   if(brush) DeleteObject(brush);
   brushColor = RGB(color.red, color.green, color.blue);
   brush = CreateSolidBrush(brushColor);
+}
+
+void pWindow::setDroppable(bool droppable) {
+  DragAcceptFiles(hwnd, droppable);
 }
 
 void pWindow::setFocused() {
@@ -115,12 +145,12 @@ void pWindow::setFullScreen(bool fullScreen) {
   } else {
     SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_POPUP);
     Geometry margin = frameMargin();
-    setGeometry({ margin.x, margin.y, GetSystemMetrics(SM_CXSCREEN) - margin.width, GetSystemMetrics(SM_CYSCREEN) - margin.height });
+    setGeometry({margin.x, margin.y, GetSystemMetrics(SM_CXSCREEN) - margin.width, GetSystemMetrics(SM_CYSCREEN) - margin.height});
   }
   locked = false;
 }
 
-void pWindow::setGeometry(const Geometry &geometry) {
+void pWindow::setGeometry(Geometry geometry) {
   locked = true;
   Geometry margin = frameMargin();
   SetWindowPos(
@@ -130,7 +160,7 @@ void pWindow::setGeometry(const Geometry &geometry) {
     SWP_NOZORDER | SWP_FRAMECHANGED
   );
   SetWindowPos(hstatus, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
-  for(auto &layout : window.state.layout) {
+  for(auto& layout : window.state.layout) {
     Geometry geom = this->geometry();
     geom.x = geom.y = 0;
     layout.setGeometry(geom);
@@ -138,7 +168,7 @@ void pWindow::setGeometry(const Geometry &geometry) {
   locked = false;
 }
 
-void pWindow::setMenuFont(const string &font) {
+void pWindow::setMenuFont(string font) {
 }
 
 void pWindow::setMenuVisible(bool visible) {
@@ -166,13 +196,13 @@ void pWindow::setResizable(bool resizable) {
   setGeometry(window.state.geometry);
 }
 
-void pWindow::setStatusFont(const string &font) {
+void pWindow::setStatusFont(string font) {
   if(hstatusfont) DeleteObject(hstatusfont);
   hstatusfont = pFont::create(font);
   SendMessage(hstatus, WM_SETFONT, (WPARAM)hstatusfont, 0);
 }
 
-void pWindow::setStatusText(const string &text) {
+void pWindow::setStatusText(string text) {
   SendMessage(hstatus, SB_SETTEXT, 0, (LPARAM)(wchar_t*)utf16_t(text));
 }
 
@@ -183,7 +213,7 @@ void pWindow::setStatusVisible(bool visible) {
   locked = false;
 }
 
-void pWindow::setTitle(const string &text) {
+void pWindow::setTitle(string text) {
   SetWindowText(hwnd, utf16_t(text));
 }
 
@@ -192,7 +222,7 @@ void pWindow::setVisible(bool visible) {
   if(visible == false) setModal(false);
 }
 
-void pWindow::setWidgetFont(const string &font) {
+void pWindow::setWidgetFont(string font) {
 }
 
 void pWindow::constructor() {
@@ -208,7 +238,8 @@ void pWindow::constructor() {
   SetWindowLongPtr(hstatus, GWL_STYLE, GetWindowLong(hstatus, GWL_STYLE) | WS_DISABLED);
 
   SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&window);
-  setGeometry({ 128, 128, 256, 256 });
+  setDroppable(window.state.droppable);
+  setGeometry({128, 128, 256, 256});
 }
 
 void pWindow::destructor() {
@@ -222,7 +253,7 @@ void pWindow::updateMenu() {
   if(hmenu) DestroyMenu(hmenu);
   hmenu = CreateMenu();
 
-  for(auto &menu : window.state.menu) {
+  for(auto& menu : window.state.menu) {
     menu.p.update(window);
     if(menu.visible()) {
       AppendMenu(hmenu, MF_STRING | MF_POPUP, (UINT_PTR)menu.p.hmenu, utf16_t(menu.state.text));

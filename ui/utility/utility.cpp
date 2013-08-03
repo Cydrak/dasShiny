@@ -196,46 +196,45 @@ void Utility::tracerToggle() {
 void Utility::synchronizeDSP() {
   if(program->active == nullptr) return;
 
-  if(config->video.synchronize == false) {
+  if(uiConfig->video.synchronize == false) {
     return dspaudio.setFrequency(system().audioFrequency());
   }
 
   double inputRatio = system().audioFrequency() / system().videoFrequency();
-  double outputRatio = config->timing.audio / config->timing.video;
-  double frequency = inputRatio / outputRatio * config->audio.frequency;
+  double outputRatio = uiConfig->timing.audio / uiConfig->timing.video;
+  double frequency = inputRatio / outputRatio * uiConfig->audio.frequency;
 
   dspaudio.setFrequency(frequency);
 }
 
 void Utility::synchronizeRuby() {
-  video.set(Video::Synchronize, config->video.synchronize);
-  audio.set(Audio::Synchronize, config->audio.synchronize);
-  audio.set(Audio::Frequency, config->audio.frequency);
-  audio.set(Audio::Latency, config->audio.latency);
+  video.set(Video::Synchronize, uiConfig->video.synchronize);
+  audio.set(Audio::Synchronize, uiConfig->audio.synchronize);
+  audio.set(Audio::Frequency, uiConfig->audio.frequency);
+  audio.set(Audio::Latency, uiConfig->audio.latency);
 
-  switch(config->audio.resampler) {
+  switch(uiConfig->audio.resampler) {
   case 0: dspaudio.setResampler(DSP::ResampleEngine::Linear);  break;
   case 1: dspaudio.setResampler(DSP::ResampleEngine::Hermite); break;
   case 2: dspaudio.setResampler(DSP::ResampleEngine::Sinc);    break;
   }
-  dspaudio.setResamplerFrequency(config->audio.frequency);
-  dspaudio.setVolume(config->audio.mute ? 0.0 : config->audio.volume * 0.01);
+  dspaudio.setResamplerFrequency(uiConfig->audio.frequency);
+  dspaudio.setVolume(uiConfig->audio.mute ? 0.0 : uiConfig->audio.volume * 0.01);
   synchronizeDSP();
 }
 
 void Utility::updateShader() {
-  if(config->video.shader == "None") {
+  if(uiConfig->video.shader == "None") {
     video.set(Video::Shader, (const char*)"");
     video.set(Video::Filter, 0u);
     return;
   }
-  if(config->video.shader == "Blur") {
+  if(uiConfig->video.shader == "Blur") {
     video.set(Video::Shader, (const char*)"");
     video.set(Video::Filter, 1u);
     return;
   }
-  string data;
-  data.readfile(config->video.shader);
+  string data = string::read(uiConfig->video.shader);
   video.set(Video::Shader, (const char*)data);
 }
 
@@ -259,12 +258,12 @@ void Utility::resize(bool resizeWindow) {
 
   unsigned scaleMode = 0;
 
-  if(config->video.scaleMode == 1) {
+  if(uiConfig->video.scaleMode == 1) {
     width  = (double)width * ((double)geometry.height / height);
     height = geometry.height;
   }
 
-  if(config->video.scaleMode == 2) {
+  if(uiConfig->video.scaleMode == 2) {
     width  = geometry.width;
     height = geometry.height;
   }

@@ -197,6 +197,9 @@ uint32 ARM946ES::fetch(uint32 addr, uint32 size, bool s) {
 }
 
 uint32 ARM946ES::read(uint32 addr, uint32 size, bool s) {
+  //if(addr - 0x0213fd00 < 0x800u) print("arm9: lbuffer ",hex<8>(addr)," read ","\n");
+  //if(addr - 0x02140500 < 0x800u) print("arm9: rbuffer ",hex<8>(addr)," read ","\n");
+  
   if(itcmRCompare == (itcmRMask & addr)) { istep(1); return itcm.read(addr % 0x8000, size); }
   if(dtcmRCompare == (dtcmRMask & addr)) {           return dtcm.read(addr % 0x4000, size); }
   
@@ -231,6 +234,11 @@ uint32 ARM946ES::read(uint32 addr, uint32 size, bool s) {
 }
 
 void ARM946ES::write(uint32 addr, uint32 size, bool s, uint32 data) {
+  //if(addr - 0x0213fd00 == 0x000u) print("arm9: lbuffer ",hex<8>(addr)," write ",hex<8>(data),"\n");
+  //if(addr - 0x02140500 == 0x000u) print("arm9: rbuffer ",hex<8>(addr)," write ",hex<8>(data),"\n");
+  //if(addr - 0x0213fd00 == 0x400u) print("arm9: lbuffer ",hex<8>(addr)," write ",hex<8>(data),"\n");
+  //if(addr - 0x02140500 == 0x400u) print("arm9: rbuffer ",hex<8>(addr)," write ",hex<8>(data),"\n");
+  
   if(itcmWCompare == (itcmWMask & addr)) { istep(1); return itcm.write(addr % 0x8000, size, data); }
   if(dtcmWCompare == (dtcmWMask & addr)) {           return dtcm.write(addr % 0x4000, size, data); }
   

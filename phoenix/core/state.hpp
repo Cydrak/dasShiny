@@ -10,14 +10,14 @@ struct Timer::State {
 
 struct BrowserWindow::State {
   lstring filters;
-  Window *parent = nullptr;
+  Window* parent = nullptr;
   string path;
   string title;
 };
 
 struct MessageWindow::State {
   MessageWindow::Buttons buttons = MessageWindow::Buttons::Ok;
-  Window *parent = nullptr;
+  Window* parent = nullptr;
   string text;
   string title;
 };
@@ -25,10 +25,11 @@ struct MessageWindow::State {
 struct Window::State {
   bool backgroundColorOverride = false;
   Color backgroundColor = {0, 0, 0, 255};
+  bool droppable = false;
   bool fullScreen = false;
   Geometry geometry = {128, 128, 256, 256};
-  set<Layout&> layout;
-  set<Menu&> menu;
+  group<Layout> layout;
+  group<Menu> menu;
   string menuFont;
   bool menuVisible = false;
   bool modal = false;
@@ -38,19 +39,19 @@ struct Window::State {
   bool statusVisible = false;
   string title;
   bool visible = false;
-  set<Widget&> widget;
+  group<Widget> widget;
   string widgetFont;
 };
 
 struct Action::State {
   bool enabled = true;
-  Menu *menu = nullptr;
+  Menu* menu = nullptr;
   bool visible = true;
-  Window *window = nullptr;
+  Window* window = nullptr;
 };
 
 struct Menu::State {
-  set<Action&> action;
+  group<Action> action;
   nall::image image = {0, 32, 255u << 24, 255u << 16, 255u << 8, 255u << 0};
   string text;
 };
@@ -67,13 +68,13 @@ struct CheckItem::State {
 
 struct RadioItem::State {
   bool checked = true;
-  set<RadioItem&> group;
+  nall::group<RadioItem> group;
   string text;
 };
 
 struct Sizable::State {
-  Layout *layout = nullptr;
-  Window *window = nullptr;
+  Layout* layout = nullptr;
+  Window* window = nullptr;
 };
 
 struct Layout::State {
@@ -94,7 +95,8 @@ struct Button::State {
 };
 
 struct Canvas::State {
-  uint32_t *data = nullptr;
+  uint32_t* data = nullptr;
+  bool droppable = false;
   unsigned width = 256;
   unsigned height = 256;
 };
@@ -152,7 +154,7 @@ struct ProgressBar::State {
 
 struct RadioButton::State {
   bool checked = true;
-  set<RadioButton&> group;
+  nall::group<RadioButton> group;
   string text;
 };
 
@@ -171,4 +173,8 @@ struct VerticalScroller::State {
 struct VerticalSlider::State {
   unsigned length = 101;
   unsigned position = 0;
+};
+
+struct Viewport::State {
+  bool droppable = false;
 };

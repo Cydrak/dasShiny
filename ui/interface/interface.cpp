@@ -14,25 +14,25 @@ void Interface::saveRequest(unsigned id, const string &path) {
 }
 
 uint32_t Interface::videoColor(unsigned source, uint16_t r, uint16_t g, uint16_t b) {
-  if(config->video.saturation != 100) {
+  if(uiConfig->video.saturation != 100) {
     uint16_t grayscale = uclamp<16>((r + g + b) / 3);
-    double saturation = config->video.saturation * 0.01;
+    double saturation = uiConfig->video.saturation * 0.01;
     double inverse = max(0.0, 1.0 - saturation);
     r = uclamp<16>(r * saturation + grayscale * inverse);
     g = uclamp<16>(g * saturation + grayscale * inverse);
     b = uclamp<16>(b * saturation + grayscale * inverse);
   }
 
-  if(config->video.gamma != 100) {
-    double exponent = config->video.gamma * 0.01;
+  if(uiConfig->video.gamma != 100) {
+    double exponent = uiConfig->video.gamma * 0.01;
     double reciprocal = 1.0 / 32767.0;
     r = r > 32767 ? r : 32767 * pow(r * reciprocal, exponent);
     g = g > 32767 ? g : 32767 * pow(g * reciprocal, exponent);
     b = b > 32767 ? b : 32767 * pow(b * reciprocal, exponent);
   }
 
-  if(config->video.luminance != 100) {
-    double luminance = config->video.luminance * 0.01;
+  if(uiConfig->video.luminance != 100) {
+    double luminance = uiConfig->video.luminance * 0.01;
     r = r * luminance;
     g = g * luminance;
     b = b * luminance;

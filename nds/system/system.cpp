@@ -395,7 +395,7 @@ void System::loadRTC(const stream& stream) {
       string sec  = time[2];
       string frac = "0";
       
-      if(sec.position(".")) {
+      if(sec.find(".")) {
         frac = sec.split(".")[1];
         sec  = sec.split(".")[0];
       }
@@ -441,7 +441,7 @@ void System::loadRTC(const stream& stream) {
       string sec = savedAt[2];
       string usec = "0";
       
-      if(sec.position(".")) {
+      if(sec.find(".")) {
         usec = sec.split(".")[1];
         sec  = sec.split(".")[0];
       }
@@ -473,8 +473,8 @@ void System::saveRTC(const stream& stream) {
   
   struct tm now = *gmtime(&tv.tv_sec);
   
-  string saveDate = { decimal(1900 + now.tm_year), "/", decimal<2,'0'>(now.tm_mon+1), "/", decimal<2,'0'>(now.tm_mday) };
-  string saveTime = { decimal<2,'0'>(now.tm_hour), ":", decimal<2,'0'>(now.tm_min),   ":", decimal<2,'0'>(now.tm_sec), ".", decimal<6,'0'>(tv.tv_usec) };
+  string saveDate = { format(1900 + now.tm_year), "/", format<2,'0'>(now.tm_mon+1), "/", format<2,'0'>(now.tm_mday) };
+  string saveTime = { format<2,'0'>(now.tm_hour), ":", format<2,'0'>(now.tm_min),   ":", format<2,'0'>(now.tm_sec), ".", format<6,'0'>(tv.tv_usec) };
   
   string dateStr  = { hex<4>(0x2000 + clock.year), "/", hex<2>(clock.month), "/", hex<2>(clock.day) };
   string timeStr  = {          hex<2>(clock.hour), ":", hex<2>(clock.minute), ":", hex<2>(clock.second), ".", hex<4>(clock.counter) };

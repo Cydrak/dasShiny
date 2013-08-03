@@ -5,6 +5,7 @@
 #include <nall/string.hpp>
 
 #include <shlwapi.h>
+#undef interface
 #ifndef KEY_WOW64_64KEY
   #define KEY_WOW64_64KEY 0x0100
 #endif
@@ -23,7 +24,7 @@
 namespace nall {
 
 struct registry {
-  static bool exists(const string &name) {
+  static bool exists(const string& name) {
     lstring part = name.split("/");
     HKEY handle, rootKey = root(part.take(0));
     string node = part.take();
@@ -38,7 +39,7 @@ struct registry {
     return false;
   }
 
-  static string read(const string &name) {
+  static string read(const string& name) {
     lstring part = name.split("/");
     HKEY handle, rootKey = root(part.take(0));
     string node = part.take();
@@ -53,7 +54,7 @@ struct registry {
     return "";
   }
 
-  static void write(const string &name, const string &data = "") {
+  static void write(const string& name, const string& data = "") {
     lstring part = name.split("/");
     HKEY handle, rootKey = root(part.take(0));
     string node = part.take(), path;
@@ -70,7 +71,7 @@ struct registry {
     }
   }
 
-  static bool remove(const string &name) {
+  static bool remove(const string& name) {
     lstring part = name.split("/");
     HKEY rootKey = root(part.take(0));
     string node = part.take();
@@ -79,7 +80,7 @@ struct registry {
     return SHDeleteValueW(rootKey, utf16_t(path), utf16_t(node)) == ERROR_SUCCESS;
   }
 
-  static lstring contents(const string &name) {
+  static lstring contents(const string& name) {
     lstring part = name.split("/"), result;
     HKEY handle, rootKey = root(part.take(0));
     part.remove();
@@ -105,7 +106,7 @@ struct registry {
   }
 
 private:
-  static HKEY root(const string &name) {
+  static HKEY root(const string& name) {
     if(name == "HKCR") return HKEY_CLASSES_ROOT;
     if(name == "HKCC") return HKEY_CURRENT_CONFIG;
     if(name == "HKCU") return HKEY_CURRENT_USER;

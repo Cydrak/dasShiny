@@ -84,12 +84,16 @@ void Browser::bootstrap() {
   import.selection = 0;
   
   for(auto &folder : folderList) {
-    config.append(folder.path, folder.extension);
-    config.append(folder.selection, string{folder.extension, "::selection"});
+    Configuration::Node node;
+    node.append(folder.path, "Path");
+    node.append(folder.selection, "Selection");
+    config.append(node, folder.extension);
   }
-  config.append(import.path, "Import");
-  config.append(import.path, "Import::selection");
-
+  Configuration::Node node;
+  node.append(import.path, "Path");
+  node.append(import.selection, "Selection");
+  config.append(node, "Import");
+  
   config.load(program->loadPath("paths.cfg"));
   config.save(program->savePath("paths.cfg"));
 }

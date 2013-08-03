@@ -2,15 +2,14 @@
 
 namespace nall {
 
-template<signed precision, char padchar> string format(const string &value) {
+template<signed precision, char padchar> string format(const string& value) {
   if(precision == 0) return value;
 
   bool padright = precision >= 0;
   unsigned padding = abs(precision);
 
-  unsigned length = value.length();
-  if(padding <= length) {
-    if(padright) return substr(value, length - padding);
+  if(padding <= value.size()) {
+    if(padright) return substr(value, value.size() - padding);
     else return substr(value, 0, padding);
   }
 
@@ -18,7 +17,7 @@ template<signed precision, char padchar> string format(const string &value) {
   buffer.resize(padding);
   buffer.clear(padchar);
 
-  memcpy(buffer() + (padright ? padding - length : 0), value, length);
+  memcpy(buffer.data() + (padright ? padding - value.size() : 0), value, value.size());
   return buffer;
 }
 
@@ -32,7 +31,7 @@ template<signed precision, char padchar> string hex(uintmax_t value) {
     buffer[size++] = n < 10 ? '0' + n : 'a' + n - 10;
     value >>= 4;
   } while(value);
-  buffer[size] = 0;
+  buffer.resize(size);
   buffer.reverse();
 
   return format<precision, padchar>(buffer);
@@ -47,7 +46,7 @@ template<signed precision, char padchar> string octal(uintmax_t value) {
     buffer[size++] = '0' + (value & 7);
     value >>= 3;
   } while(value);
-  buffer[size] = 0;
+  buffer.resize(size);
   buffer.reverse();
 
   return format<precision, padchar>(buffer);
@@ -62,7 +61,7 @@ template<signed precision, char padchar> string binary(uintmax_t value) {
     buffer[size++] = '0' + (value & 1);
     value >>= 1;
   } while(value);
-  buffer[size] = 0;
+  buffer.resize(size);
   buffer.reverse();
 
   return format<precision, padchar>(buffer);

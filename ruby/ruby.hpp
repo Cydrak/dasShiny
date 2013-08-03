@@ -1,22 +1,14 @@
 /*
   ruby
-  version: 0.08 (2011-11-25)
+  version: 0.10 (2013-07-27)
   license: public domain
 */
 
 #ifndef RUBY_H
 #define RUBY_H
 
-#include <nall/platform.hpp>
-#include <nall/algorithm.hpp>
-#include <nall/any.hpp>
-#include <nall/bit.hpp>
+#include <nall/nall.hpp>
 #include <nall/input.hpp>
-#include <nall/intrinsics.hpp>
-#include <nall/sort.hpp>
-#include <nall/stdint.hpp>
-#include <nall/string.hpp>
-#include <nall/vector.hpp>
 
 namespace ruby {
 
@@ -25,9 +17,10 @@ namespace ruby {
 #include <ruby/input.hpp>
 
 struct VideoInterface {
-  void driver(const char *driver = "");
-  const char* default_driver();
-  const char* driver_list();
+  void driver(const char* driver = "");
+  const char* optimalDriver();
+  const char* safestDriver();
+  const char* availableDrivers();
   bool init();
   void term();
 
@@ -35,7 +28,7 @@ struct VideoInterface {
   nall::any get(const nall::string& name);
   bool set(const nall::string& name, const nall::any& value);
 
-  bool lock(uint32_t *&data, unsigned &pitch, unsigned width, unsigned height);
+  bool lock(uint32_t*& data, unsigned& pitch, unsigned width, unsigned height);
   void unlock();
   void clear();
   void refresh();
@@ -43,13 +36,14 @@ struct VideoInterface {
   ~VideoInterface();
 
 private:
-  Video *p;
+  Video* p = nullptr;
 };
 
 struct AudioInterface {
-  void driver(const char *driver = "");
-  const char* default_driver();
-  const char* driver_list();
+  void driver(const char* driver = "");
+  const char* optimalDriver();
+  const char* safestDriver();
+  const char* availableDrivers();
   bool init();
   void term();
 
@@ -63,13 +57,14 @@ struct AudioInterface {
   ~AudioInterface();
 
 private:
-  Audio *p;
+  Audio* p = nullptr;
 };
 
 struct InputInterface {
-  void driver(const char *driver = "");
-  const char* default_driver();
-  const char* driver_list();
+  void driver(const char* driver = "");
+  const char* optimalDriver();
+  const char* safestDriver();
+  const char* availableDrivers();
   bool init();
   void term();
 
@@ -81,12 +76,12 @@ struct InputInterface {
   bool unacquire();
   bool acquired();
 
-  bool poll(int16_t *table);
+  bool poll(int16_t* table);
   InputInterface();
   ~InputInterface();
 
 private:
-  Input *p;
+  Input* p = nullptr;
 };
 
 extern VideoInterface video;

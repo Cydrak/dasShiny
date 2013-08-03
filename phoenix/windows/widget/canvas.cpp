@@ -1,10 +1,18 @@
 namespace phoenix {
 
 static LRESULT CALLBACK Canvas_windowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-  Object *object = (Object*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+  Object* object = (Object*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
   if(object == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
   if(!dynamic_cast<Canvas*>(object)) return DefWindowProc(hwnd, msg, wparam, lparam);
-  Canvas &canvas = (Canvas&)*object;
+  Canvas& canvas = (Canvas&)*object;
+
+  if(msg == WM_DROPFILES) {
+    lstring paths = DropPaths(wparam);
+    if(paths.empty() == false) {
+      if(canvas.onDrop) canvas.onDrop(paths);
+    }
+    return FALSE;
+  }
 
   if(msg == WM_GETDLGCODE) {
     return DLGC_STATIC | DLGC_WANTCHARS;
@@ -16,9 +24,9 @@ static LRESULT CALLBACK Canvas_windowProc(HWND hwnd, UINT msg, WPARAM wparam, LP
   }
 
   if(msg == WM_MOUSEMOVE) {
-    TRACKMOUSEEVENT tracker = { sizeof(TRACKMOUSEEVENT), TME_LEAVE, hwnd };
+    TRACKMOUSEEVENT tracker = {sizeof(TRACKMOUSEEVENT), TME_LEAVE, hwnd};
     TrackMouseEvent(&tracker);
-    if(canvas.onMouseMove) canvas.onMouseMove({ (int16_t)LOWORD(lparam), (int16_t)HIWORD(lparam) });
+    if(canvas.onMouseMove) canvas.onMouseMove({(int16_t)LOWORD(lparam), (int16_t)HIWORD(lparam)});
   }
 
   if(msg == WM_MOUSELEAVE) {
@@ -44,7 +52,11 @@ static LRESULT CALLBACK Canvas_windowProc(HWND hwnd, UINT msg, WPARAM wparam, LP
   return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-void pCanvas::setSize(const Size &size) {
+void pCanvas::setDroppable(bool droppable) {
+  DragAcceptFiles(hwnd, droppable);
+}
+
+void pCanvas::setSize(Size size) {
   delete[] data;
   data = new uint32_t[size.width * size.height];
 }
@@ -59,6 +71,7 @@ void pCanvas::constructor() {
   memcpy(data, canvas.state.data, canvas.state.width * canvas.state.height * sizeof(uint32_t));
   hwnd = CreateWindow(L"phoenix_canvas", L"", WS_CHILD, 0, 0, 0, 0, parentWindow->p.hwnd, (HMENU)id, GetModuleHandle(0), 0);
   SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&canvas);
+  setDroppable(canvas.state.droppable);
   synchronize();
 }
 

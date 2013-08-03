@@ -12,7 +12,7 @@ Emulator::Interface& system() {
 }
 
 bool Program::focused() {
-  return config->input.focusAllow || presentation->focused();
+  return uiConfig->input.focusAllow || presentation->focused();
 }
 
 optional<vector<uint8>> Program::getResource(string rpath) {
@@ -45,7 +45,7 @@ string Program::savePath(const string &filename) {
 void Program::main() {
   inputManager->poll();
   utility->updateStatus();
-  autopause = config->input.focusPause && presentation->focused() == false;
+  autopause = uiConfig->input.focusPause && presentation->focused() == false;
 
   if(active == nullptr || system().loaded() == false || pause || autopause) {
     audio.clear();
@@ -102,10 +102,10 @@ Program::Program(int argc, char **argv) {
     monospaceFont = Font::monospace(8);
   }
   
-  config = new Configuration;
-  video.driver(config->video.driver);
-  audio.driver(config->audio.driver);
-  input.driver(config->input.driver);
+  uiConfig = new UIConfiguration;
+  video.driver(uiConfig->video.driver);
+  audio.driver(uiConfig->audio.driver);
+  input.driver(uiConfig->input.driver);
 
   utility = new Utility;
   inputManager = new InputManager;
@@ -140,7 +140,7 @@ Program::Program(int argc, char **argv) {
   utility->synchronizeRuby();
   utility->updateShader();
 
-  if(config->video.startFullScreen && argc >= 2) utility->toggleFullScreen();
+  if(uiConfig->video.startFullScreen && argc >= 2) utility->toggleFullScreen();
   Application::processEvents();
 
   if(argc >= 2) utility->loadMedia(argv[1]);
@@ -149,7 +149,7 @@ Program::Program(int argc, char **argv) {
   Application::run();
 
   utility->unload();
-  config->save();
+  uiConfig->save();
   browser->saveConfiguration();
   inputManager->saveConfiguration();
   windowManager->saveGeometry();

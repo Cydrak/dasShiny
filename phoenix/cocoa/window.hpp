@@ -1,9 +1,9 @@
 @interface CocoaWindow : NSWindow <NSWindowDelegate> {
 @public
-  phoenix::Window *window;
-  NSMenu *menuBar;
-  NSMenu *rootMenu;
-  NSTextField *statusBar;
+  phoenix::Window* window;
+  NSMenu* menuBar;
+  NSMenu* rootMenu;
+  NSTextField* statusBar;
 }
 -(id) initWith:(phoenix::Window&)window;
 -(BOOL) canBecomeKeyWindow;
@@ -12,6 +12,8 @@
 -(void) windowDidMove:(NSNotification*)notification;
 -(void) windowDidResize:(NSNotification*)notification;
 -(BOOL) windowShouldClose:(id)sender;
+-(NSDragOperation) draggingEntered:(id<NSDraggingInfo>)sender;
+-(BOOL) performDragOperation:(id<NSDraggingInfo>)sender;
 -(NSMenu*) menuBar;
 -(void) menuAbout;
 -(void) menuPreferences;
@@ -22,37 +24,38 @@
 namespace phoenix {
 
 struct pWindow : public pObject {
-  Window &window;
-  CocoaWindow *cocoaWindow = nullptr;
+  Window& window;
+  CocoaWindow* cocoaWindow = nullptr;
 
   static Window& none();
 
-  void append(Layout &layout);
-  void append(Menu &menu);
-  void append(Widget &widget);
+  void append(Layout& layout);
+  void append(Menu& menu);
+  void append(Widget& widget);
   Color backgroundColor();
   bool focused();
   Geometry frameMargin();
   Geometry geometry();
-  void remove(Layout &layout);
-  void remove(Menu &menu);
-  void remove(Widget &widget);
-  void setBackgroundColor(const Color &color);
+  void remove(Layout& layout);
+  void remove(Menu& menu);
+  void remove(Widget& widget);
+  void setBackgroundColor(Color color);
+  void setDroppable(bool droppable);
   void setFocused();
   void setFullScreen(bool fullScreen);
-  void setGeometry(const Geometry &geometry);
-  void setMenuFont(const string &font);
+  void setGeometry(Geometry geometry);
+  void setMenuFont(string font);
   void setMenuVisible(bool visible);
   void setModal(bool modal);
   void setResizable(bool resizable);
-  void setStatusFont(const string &font);
-  void setStatusText(const string &text);
+  void setStatusFont(string font);
+  void setStatusText(string text);
   void setStatusVisible(bool visible);
-  void setTitle(const string &text);
+  void setTitle(string text);
   void setVisible(bool visible);
-  void setWidgetFont(const string &font);
+  void setWidgetFont(string font);
 
-  pWindow(Window &window) : pObject(window), window(window) {}
+  pWindow(Window& window) : pObject(window), window(window) {}
   void constructor();
   void destructor();
   void moveEvent();

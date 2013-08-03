@@ -6,13 +6,13 @@ static const unsigned WindowsVista = 0x0600;
 static const unsigned Windows7     = 0x0601;
 
 static unsigned OsVersion() {
-  OSVERSIONINFO versionInfo = { 0 };
+  OSVERSIONINFO versionInfo = {0};
   versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
   GetVersionEx(&versionInfo);
   return (versionInfo.dwMajorVersion << 8) + (versionInfo.dwMajorVersion << 0);
 }
 
-static HBITMAP CreateBitmap(const image &image) {
+static HBITMAP CreateBitmap(const image& image) {
   HDC hdc = GetDC(0);
   BITMAPINFO bitmapInfo;
   memset(&bitmapInfo, 0, sizeof(BITMAPINFO));
@@ -23,11 +23,39 @@ static HBITMAP CreateBitmap(const image &image) {
   bitmapInfo.bmiHeader.biBitCount = 32;
   bitmapInfo.bmiHeader.biCompression = BI_RGB;
   bitmapInfo.bmiHeader.biSizeImage = image.width * image.height * 4;
-  void *bits = nullptr;
+  void* bits = nullptr;
   HBITMAP hbitmap = CreateDIBSection(hdc, &bitmapInfo, DIB_RGB_COLORS, &bits, NULL, 0);
   if(bits) memcpy(bits, image.data, image.width * image.height * 4);
   ReleaseDC(0, hdc);
   return hbitmap;
+}
+
+static unsigned GetWindowZOrder(HWND hwnd) {
+  unsigned z = 0;
+  for(HWND next = hwnd; next != NULL; next = GetWindow(next, GW_HWNDPREV)) z++;
+  return z;
+}
+
+static lstring DropPaths(WPARAM wparam) {
+  auto dropList = HDROP(wparam);
+  auto fileCount = DragQueryFile(dropList, ~0u, nullptr, 0);
+
+  lstring paths;
+  for(unsigned n = 0; n < fileCount; n++) {
+    auto length = DragQueryFile(dropList, n, nullptr, 0);
+    auto buffer = new wchar_t[length + 1];
+
+    if(DragQueryFile(dropList, n, buffer, length + 1)) {
+      string path = (const char*)utf8_t(buffer);
+      path.transform("\\", "/");
+      if(directory::exists(path) && !path.endswith("/")) path.append("/");
+      paths.append(path);
+    }
+
+    delete[] buffer;
+  }
+
+  return paths;
 }
 
 static Keyboard::Keycode Keysym(unsigned keysym, unsigned keyflags) {

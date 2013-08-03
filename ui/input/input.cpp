@@ -14,21 +14,21 @@ void AbstractInput::bind() {
     else if(mapping.endswith(".Right")) type = Input::Type::HatRight;
     else if(mapping.endswith(".Lo")) type = Input::Type::AxisLo;
     else if(mapping.endswith(".Hi")) type = Input::Type::AxisHi;
-    else if(mapping.beginswith("JP") && mapping.position("Axis")) type = Input::Type::Axis;
+    else if(mapping.beginswith("JP") && mapping.find("Axis")) type = Input::Type::Axis;
     else if(mapping.beginswith("MS") && mapping.endswith("axis")) type = Input::Type::MouseAxis;
     else if(mapping.beginswith("MS")) type = Input::Type::MouseButton;
     else type = Input::Type::Button;
 
     string decode = mapping;
-    if(auto position = decode.position(".")) decode[position()] = 0;
+    if(auto position = decode.find(".")) decode[position()] = 0;
     unsigned scancode = Scancode::decode(decode);
 
     inputList.append({type, scancode});
   }
 }
 
-bool AbstractInput::append(const string &encode) {
-  if(mapping.position(encode)) return true;  //mapping already bound
+bool AbstractInput::append(string encode) {
+  if(mapping.find(encode)) return true;  //mapping already bound
   if(mapping.empty() || mapping == "None") mapping = encode;  //remove "None"
   else mapping.append(",", encode);  //add to existing mapping list
   bind();
@@ -254,7 +254,7 @@ int16_t InputManager::poll(unsigned scancode) {
 }
 
 void InputManager::saveConfiguration() {
-  config.save(program->savePath("input.cfg"));
+  config.save(program->savePath("input.bml"));
 }
 
 InputManager::InputManager() {
@@ -267,8 +267,14 @@ InputManager::InputManager() {
 void InputManager::bootstrap() {
   unsigned guid = 0;
   for(auto &emulator : program->emulator) {
+    Configuration::Node emulatorNode;
+
     for(auto &port : emulator->port) {
+      Configuration::Node portNode;
+
       for(auto &device : port.device) {
+        Configuration::Node deviceNode;
+
         for(auto &number : device.order) {
           auto &input = device.input[number];
 
@@ -278,28 +284,27 @@ void InputManager::bootstrap() {
           if(input.type == 2) abstract = new AbsoluteInput;
           if(input.type >= 3) continue;
 
-          abstract->name = {emulator->information.name, "::", port.name, "::", device.name, "::", input.name};
-          abstract->name.replace(" ", "");
+          abstract->name = string{input.name}.replace(" ", "");
           abstract->mapping = "None";
           abstract->logic = 0;  //OR
 
           input.guid = guid++;
           inputMap.append(abstract);
+          deviceNode.append(abstract->mapping, abstract->name);
         }
+        portNode.append(deviceNode, string{device.name}.replace(" ", ""));
       }
+      emulatorNode.append(portNode, string{port.name}.replace(" ", ""));
     }
-  }
-
-  for(auto &input : inputMap) {
-    config.append(input->mapping, input->name);
+    config.append(emulatorNode, string{emulator->information.name}.replace(" ", ""));
   }
 
   appendHotkeys();
   
-  string path = program->savePath("input.cfg");
+  string path = program->savePath("input.bml");
   
   if(!file::exists(path))
-    if(auto defaults = program->getResource("User defaults/input.cfg"))
+    if(auto defaults = program->getResource("User defaults/input.bml"))
       file::write(path, vectorstream(defaults()).text());
   
   config.load(path);

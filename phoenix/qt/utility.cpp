@@ -1,11 +1,26 @@
 namespace phoenix {
 
-static QIcon CreateIcon(const nall::image &image, bool scale = false) {
+static QIcon CreateIcon(const nall::image& image, bool scale = false) {
   nall::image qtBuffer = image;
   qtBuffer.transform(0, 32, 255u << 24, 255u << 16, 255u << 8, 255u << 0);
   if(scale) qtBuffer.scale(16, 16, Interpolation::Linear);
   QImage qtImage(qtBuffer.data, qtBuffer.width, qtBuffer.height, QImage::Format_ARGB32);
   return QIcon(QPixmap::fromImage(qtImage));
+}
+
+static lstring DropPaths(QDropEvent* event) {
+  QList<QUrl> urls = event->mimeData()->urls();
+  if(urls.size() == 0) return {};
+
+  lstring paths;
+  for(unsigned n = 0; n < urls.size(); n++) {
+    string path = urls[n].path().toUtf8().constData();
+    if(path.empty()) continue;
+    if(directory::exists(path) && !path.endswith("/")) path.append("/");
+    paths.append(path);
+  }
+
+  return paths;
 }
 
 static Keyboard::Keycode Keysym(int keysym) {

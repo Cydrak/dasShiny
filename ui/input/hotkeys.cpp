@@ -40,8 +40,8 @@ void InputManager::appendHotkeys() {
     };
 
     hotkey->release = [] {
-      video.set(Video::Synchronize, ::config->video.synchronize);
-      audio.set(Audio::Synchronize, ::config->audio.synchronize);
+      video.set(Video::Synchronize, uiConfig->video.synchronize);
+      audio.set(Audio::Synchronize, uiConfig->audio.synchronize);
     };
   }
 
@@ -97,11 +97,11 @@ void InputManager::appendHotkeys() {
     };
   }
 
-  for(auto &hotkey : hotkeyMap) {
-    string name = {"Hotkey::", hotkey->name};
-    name.replace(" ", "");
-    config.append(hotkey->mapping, name);
-  }
+  Configuration::Node node;
+  for(auto& hotkey : hotkeyMap)
+    node.append(hotkey->mapping, string{hotkey->name}.replace(" ", ""));
+  
+  config.append(node, "Hotkey");
 }
 
 void InputManager::pollHotkeys() {

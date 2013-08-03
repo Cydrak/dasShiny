@@ -7,6 +7,8 @@
 #include <shlwapi.h>
 #endif
 
+#include <nall/nall.hpp>
+#include <nall/hashset.hpp>
 #include "utility.hpp"
 
 namespace NintendoDS {
@@ -119,8 +121,37 @@ static void convertIcon(string outPath, uint8_t* data) {
 }
 
 
+
+template<typename T, typename U> struct hashmap {
+  struct node : T {
+    U value;
+    U& operator*() { return value; }
+    node(const T& key) : T(key) {}
+    node(const T& key, const U& value) : T(key), value(value) {}
+  };
+  void reset() { table.reset(); }
+  void insert(const T& key, const U& value) { table.insert({key, value}); }
+  void remove(const T& key) { table.remove({key}); }
+  
+  optional<U&> find(const T& key) {
+    if(auto node = table.find({key})) return {true, **node};
+    return false;
+  }
+  
+  U& operator()(const T& key) {
+    if(auto node = find({key})) return *node;
+    return **table.insert({key, U()});
+  }
+  hashset<node> table;
+};
+
+
+//In instantiation of nall::optional<U&> hashmap<T, U>::find(const T&) const
+//  passing const hashset<node_t> as this of
+//  optional<T&> hashset<T>::find(const T&) [with T = node_t] discards qualifiers
+
 // game id => manifest
-static nall::map<string, nall::vector<string>> database;
+static hashmap<string, nall::vector<string>> database;
 
 
 void loadDatabase(string markup) {

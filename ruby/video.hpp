@@ -1,16 +1,14 @@
 struct Video {
-  static const char *Handle;
-  static const char *Synchronize;
-  static const char *Depth;
-  static const char *Filter;
-  static const char *Shader;
-  static const char *FragmentShader;
-  static const char *VertexShader;
+  static const char* Handle;
+  static const char* Synchronize;
+  static const char* Depth;
+  static const char* Filter;
+  static const char* Shader;
+  static const char* FragmentShader;
+  static const char* VertexShader;
 
-  enum Filter {
-    FilterPoint,
-    FilterLinear,
-  };
+  static const unsigned FilterNearest;
+  static const unsigned FilterLinear;
 
   virtual bool cap(const nall::string& name) { return false; }
   virtual nall::any get(const nall::string& name) { return false; }

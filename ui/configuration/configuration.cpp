@@ -1,35 +1,43 @@
 #include "../ui.hpp"
-Configuration *config = nullptr;
+UIConfiguration *uiConfig = nullptr;
 
-Configuration::Configuration() {
-  append(video.driver = ruby::video.default_driver(), "Video::Driver");
-  append(video.synchronize = false, "Video::Synchronize");
-  append(video.shader = "Blur", "Video::Shader");
-  append(video.scaleMode = 0, "Video::ScaleMode");
-  append(video.saturation = 100, "Video::Saturation");
-  append(video.gamma = 150, "Video::Gamma");
-  append(video.luminance = 100, "Video::Luminance");
-  append(video.startFullScreen = false, "Video::StartFullScreen");
-  append(audio.driver = ruby::audio.default_driver(), "Audio::Driver");
-  append(audio.synchronize = true, "Audio::Synchronize");
-  append(audio.frequency = 48000, "Audio::Frequency");
-  append(audio.latency = 60, "Audio::Latency");
-  append(audio.resampler = 2, "Audio::Resampler");
-  append(audio.volume = 100, "Audio::Volume");
-  append(audio.mute = false, "Audio::Mute");
-  append(input.driver = ruby::input.default_driver(), "Input::Driver");
-  append(input.focusPause = false, "Input::Focus::Pause");
-  append(input.focusAllow = false, "Input::Focus::AllowInput");
-  append(timing.video = 60.0, "Timing::Video");
-  append(timing.audio = 48000.0, "Timing::Audio");
+UIConfiguration::UIConfiguration() {
+  video.append(video.driver = ruby::video.optimalDriver(), "Driver");
+  video.append(video.synchronize = false, "Synchronize");
+  video.append(video.shader = "Blur", "Shader");
+  video.append(video.scaleMode = 0, "ScaleMode");
+  video.append(video.saturation = 100, "Saturation");
+  video.append(video.gamma = 150, "Gamma");
+  video.append(video.luminance = 100, "Luminance");
+  video.append(video.startFullScreen = false, "StartFullScreen");
+  append(video, "Video");
+  
+  audio.append(audio.driver = ruby::audio.optimalDriver(), "Driver");
+  audio.append(audio.synchronize = true, "Synchronize");
+  audio.append(audio.frequency = 48000, "Frequency");
+  audio.append(audio.latency = 60, "Latency");
+  audio.append(audio.resampler = 2, "Resampler");
+  audio.append(audio.volume = 100, "Volume");
+  audio.append(audio.mute = false, "Mute");
+  append(audio, "Audio");
+  
+  input.append(input.driver = ruby::input.optimalDriver(), "Driver");
+  input.append(input.focusPause = false, "Focus::Pause");
+  input.append(input.focusAllow = false, "Focus::AllowInput");
+  append(input, "Input");
+  
+  timing.append(timing.video = 60.0, "Video");
+  timing.append(timing.audio = 48000.0, "Audio");
+  append(timing, "Timing");
+  
   load();
 }
 
-void Configuration::load() {
-  configuration::load(program->loadPath("settings.cfg"));
+void UIConfiguration::load() {
+  inherited::load(program->loadPath("settings.bml"));
   save();  //creates file if it does not exist
 }
 
-void Configuration::save() {
-  configuration::save(program->savePath("settings.cfg"));
+void UIConfiguration::save() {
+  inherited::save(program->savePath("settings.bml"));
 }

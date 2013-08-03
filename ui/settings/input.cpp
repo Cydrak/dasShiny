@@ -35,12 +35,12 @@ InputSettings::InputSettings() : activeInput(nullptr) {
     systemList.append(emulator->information.name);
   }
 
-  focusPause.setChecked(config->input.focusPause);
-  focusAllow.setChecked(config->input.focusAllow);
-  focusAllow.setEnabled(!config->input.focusPause);
+  focusPause.setChecked(uiConfig->input.focusPause);
+  focusAllow.setChecked(uiConfig->input.focusAllow);
+  focusAllow.setEnabled(!uiConfig->input.focusPause);
 
-  focusPause.onToggle = [&] { config->input.focusPause = focusPause.checked(); focusAllow.setEnabled(!focusPause.checked()); };
-  focusAllow.onToggle = [&] { config->input.focusAllow = focusAllow.checked(); };
+  focusPause.onToggle = [&] { uiConfig->input.focusPause = focusPause.checked(); focusAllow.setEnabled(!focusPause.checked()); };
+  focusAllow.onToggle = [&] { uiConfig->input.focusAllow = focusAllow.checked(); };
   systemList.onChange = {&InputSettings::systemChanged, this};
   portList.onChange = {&InputSettings::portChanged, this};
   deviceList.onChange = {&InputSettings::deviceChanged, this};

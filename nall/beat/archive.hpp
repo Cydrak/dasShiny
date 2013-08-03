@@ -6,7 +6,7 @@
 namespace nall {
 
 struct beatArchive : beatBase {
-  bool create(const string &beatname, string pathname, const string &metadata = "") {
+  bool create(const string& beatname, string pathname, const string& metadata = "") {
     if(fp.open(beatname, file::mode::write) == false) return false;
     if(pathname.endswith("/") == false) pathname.append("/");
 
@@ -44,7 +44,7 @@ struct beatArchive : beatBase {
     return true;
   }
 
-  bool unpack(const string &beatname, string pathname) {
+  bool unpack(const string& beatname, string pathname) {
     if(fp.open(beatname, file::mode::read) == false) return false;
     if(pathname.endswith("/") == false) pathname.append("/");
 
@@ -57,7 +57,7 @@ struct beatArchive : beatBase {
     while(fp.offset() < fp.size() - 4) {
       unsigned data = readNumber();
       string name = readString((data >> 1) + 1);
-      if(name.position("\\") || name.position("../")) return false;  //block path exploits
+      if(name.find("\\") || name.find("../")) return false;  //block path exploits
 
       if((data & 1) == 0) {
         directory::create({pathname, name});

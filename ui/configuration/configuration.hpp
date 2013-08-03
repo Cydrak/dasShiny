@@ -1,5 +1,7 @@
-struct Configuration : configuration {
-  struct Video {
+struct UIConfiguration : Configuration::Document {
+  typedef Configuration::Document inherited;
+  
+  struct Video : Configuration::Node {
     string driver;
     bool synchronize;
     string shader;
@@ -10,7 +12,7 @@ struct Configuration : configuration {
     bool startFullScreen;
   } video;
 
-  struct Audio {
+  struct Audio : Configuration::Node {
     string driver;
     bool synchronize;
     unsigned frequency;
@@ -20,20 +22,20 @@ struct Configuration : configuration {
     bool mute;
   } audio;
 
-  struct Input {
+  struct Input : Configuration::Node {
     string driver;
     bool focusPause;
     bool focusAllow;
   } input;
 
-  struct Timing {
+  struct Timing : Configuration::Node {
     double video;
     double audio;
   } timing;
 
   void load();
   void save();
-  Configuration();
+  UIConfiguration();
 };
 
-extern Configuration *config;
+extern UIConfiguration *uiConfig;

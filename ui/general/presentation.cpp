@@ -11,24 +11,24 @@ void Presentation::synchronize() {
   }
 
   shaderNone.setChecked();
-  if(config->video.shader == "None") shaderNone.setChecked();
-  if(config->video.shader == "Blur") shaderBlur.setChecked();
+  if(uiConfig->video.shader == "None") shaderNone.setChecked();
+  if(uiConfig->video.shader == "Blur") shaderBlur.setChecked();
   for(auto &shader : shaderList) {
-    string name = notdir(nall::basename(config->video.shader));
-    if(auto position = name.position(".")) name[position()] = 0;
+    string name = notdir(nall::basename(uiConfig->video.shader));
+    if(auto position = name.find(".")) name[position()] = 0;
     if(name == shader->text()) shader->setChecked();
   }
 
-  switch(config->video.scaleMode) {
+  switch(uiConfig->video.scaleMode) {
   case 0: centerVideo.setChecked(); break;
   case 1: scaleVideo.setChecked(); break;
   case 2: stretchVideo.setChecked(); break;
   }
-  synchronizeVideo.setChecked(config->video.synchronize);
-  synchronizeAudio.setChecked(config->audio.synchronize);
-  muteAudio.setChecked(config->audio.mute);
+  synchronizeVideo.setChecked(uiConfig->video.synchronize);
+  synchronizeAudio.setChecked(uiConfig->audio.synchronize);
+  muteAudio.setChecked(uiConfig->audio.mute);
 
-  resizeWindow.setVisible(program->active && config->video.scaleMode != 2);
+  resizeWindow.setVisible(program->active && uiConfig->video.scaleMode != 2);
   synchronizeTime.setVisible(program->active && system().rtc());
 }
 
@@ -105,14 +105,14 @@ Presentation::Presentation() : active(nullptr) {
     if(path) utility->importMedia(path);
   };
 
-  shaderNone.onActivate = [&] { config->video.shader = "None"; utility->updateShader(); };
-  shaderBlur.onActivate = [&] { config->video.shader = "Blur"; utility->updateShader(); };
-  centerVideo.onActivate  = [&] { config->video.scaleMode = 0; utility->resize(); };
-  scaleVideo.onActivate   = [&] { config->video.scaleMode = 1; utility->resize(); };
-  stretchVideo.onActivate = [&] { config->video.scaleMode = 2; utility->resize(); };
-  synchronizeVideo.onToggle = [&] { config->video.synchronize = synchronizeVideo.checked(); utility->synchronizeRuby(); };
-  synchronizeAudio.onToggle = [&] { config->audio.synchronize = synchronizeAudio.checked(); utility->synchronizeRuby(); };
-  muteAudio.onToggle = [&] { config->audio.mute = muteAudio.checked(); utility->synchronizeRuby(); };
+  shaderNone.onActivate = [&] { uiConfig->video.shader = "None"; utility->updateShader(); };
+  shaderBlur.onActivate = [&] { uiConfig->video.shader = "Blur"; utility->updateShader(); };
+  centerVideo.onActivate  = [&] { uiConfig->video.scaleMode = 0; utility->resize(); };
+  scaleVideo.onActivate   = [&] { uiConfig->video.scaleMode = 1; utility->resize(); };
+  stretchVideo.onActivate = [&] { uiConfig->video.scaleMode = 2; utility->resize(); };
+  synchronizeVideo.onToggle = [&] { uiConfig->video.synchronize = synchronizeVideo.checked(); utility->synchronizeRuby(); };
+  synchronizeAudio.onToggle = [&] { uiConfig->audio.synchronize = synchronizeAudio.checked(); utility->synchronizeRuby(); };
+  muteAudio.onToggle = [&] { uiConfig->audio.mute = muteAudio.checked(); utility->synchronizeRuby(); };
   configurationSettings.onActivate = [&] { settings->setVisible(); settings->panelList.setFocused(); };
   resizeWindow.onActivate = [&] { utility->resize(true); };
   synchronizeTime.onActivate = [&] { system().rtcsync(); };
@@ -187,18 +187,18 @@ void Presentation::loadShaders() {
   for(auto &filename : files) {
     lstring name = string{filename}.split(".");
     //only add shaders that work with current video driver
-    if(name(1) != config->video.driver) continue;
+    if(name(1) != uiConfig->video.driver) continue;
 
     auto shader = new RadioItem;
     shader->setText(name(0));
     shader->onActivate = [=] {
-      config->video.shader = {pathname, filename};
+      uiConfig->video.shader = {pathname, filename};
       utility->updateShader();
     };
     shaderList.append(shader);
   }
 
-  set<RadioItem&> group;
+  nall::group<RadioItem> group;
   group.append(shaderNone);
   group.append(shaderBlur);
   for(auto &shader : shaderList) group.append(*shader);

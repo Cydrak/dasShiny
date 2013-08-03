@@ -9,11 +9,13 @@ void WindowManager::append(Window *window, const string &name) {
 }
 
 void WindowManager::loadGeometry() {
-  for(auto &window : windowList) {
-    config.append(window.geometry, window.name);
-  }
-  config.load(program->loadPath("geometry.cfg"));
-  config.save(program->savePath("geometry.cfg"));
+  Configuration::Node node;
+  for(auto &window : windowList)
+    node.append(window.geometry, window.name);
+  
+  config.append(node, "Geometry");
+  config.load(program->loadPath("geometry.bml"));
+  config.save(program->savePath("geometry.bml"));
   for(auto &window : windowList) {
     window.window->setGeometry(window.geometry);
   }
@@ -23,7 +25,7 @@ void WindowManager::saveGeometry() {
   for(auto &window : windowList) {
     window.geometry = window.window->geometry().text();
   }
-  config.save(program->savePath("geometry.cfg"));
+  config.save(program->savePath("geometry.bml"));
 }
 
 void WindowManager::hideAll() {

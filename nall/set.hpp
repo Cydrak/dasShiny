@@ -2,154 +2,263 @@
 #define NALL_SET_HPP
 
 //set
-//* unordered
-//* intended for unique items
-//* dynamic growth
-//* reference-based variant
+//implementation: red-black tree
+//
+//search: O(log n) average; O(log n) worst
+//insert: O(log n) average; O(log n) worst
+//remove: O(log n) average; O(log n) worst
+//
+//requirements:
+//  bool T::operator==(const T&) const;
+//  bool T::operator< (const T&) const;
 
-#include <stdlib.h>
-#include <algorithm>
-#include <initializer_list>
-#include <utility>
-#include <nall/algorithm.hpp>
-#include <nall/bit.hpp>
-#include <nall/sort.hpp>
-#include <nall/traits.hpp>
 #include <nall/utility.hpp>
+#include <nall/vector.hpp>
 
 namespace nall {
 
-template<typename T, typename Enable = void> struct set;
+template<typename T> struct set {
+  struct node_t {
+    T value;
+    bool red = 1;
+    node_t* link[2] = {nullptr, nullptr};
+    node_t() = default;
+    node_t(const T& value) : value(value) {}
+  };
 
-template<typename T> struct set<T, typename std::enable_if<!std::is_reference<T>::value>::type> {
-  struct exception_out_of_bounds{};
+  node_t* root = nullptr;
+  unsigned nodes = 0;
 
-protected:
-  T *pool;
-  unsigned poolsize, objectsize;
+  set& operator=(const set& source) { copy(source); return *this; }
+  set& operator=(set&& source) { move(std::move(source)); return *this; }
+  set(const set& source) { operator=(source); }
+  set(set&& source) { operator=(std::move(source)); }
+  set(std::initializer_list<T> list) { for(auto& value : list) insert(value); }
+  set() = default;
+  ~set() { reset(); }
 
-public:
-  unsigned size() const { return objectsize; }
-  unsigned capacity() const { return poolsize; }
-};
-
-//reference set
-template<typename TR> struct set<TR, typename std::enable_if<std::is_reference<TR>::value>::type> {
-  struct exception_out_of_bounds{};
-
-protected:
-  typedef typename std::remove_reference<TR>::type T;
-  T **pool;
-  unsigned poolsize, objectsize;
-
-public:
-  unsigned size() const { return objectsize; }
-  unsigned capacity() const { return poolsize; }
+  unsigned size() const { return nodes; }
+  bool empty() const { return nodes == 0; }
 
   void reset() {
-    if(pool) free(pool);
-    pool = nullptr;
-    poolsize = 0;
-    objectsize = 0;
+    reset(root);
+    nodes = 0;
   }
 
-  void reserve(unsigned size) {
-    if(size == poolsize) return;
-    pool = (T**)realloc(pool, sizeof(T*) * size);
-    poolsize = size;
-    objectsize = min(objectsize, size);
-  }
-
-  void resize(unsigned size) {
-    if(size > poolsize) reserve(bit::round(size));  //amortize growth
-    objectsize = size;
-  }
-
-  bool append(T& data) {
-    if(find(data)) return false;
-    unsigned offset = objectsize++;
-    if(offset >= poolsize) resize(offset + 1);
-    pool[offset] = &data;
-    return true;
-  }
-
-  template<typename... Args>
-  bool append(T& data, Args&&... args) {
-    bool result = append(data);
-    append(std::forward<Args>(args)...);
-    return result;
-  }
-
-  bool remove(T& data) {
-    if(auto position = find(data)) {
-      for(signed i = position(); i < objectsize - 1; i++) pool[i] = pool[i + 1];
-      resize(objectsize - 1);
-      return true;
-    }
+  optional<T&> find(const T& value) {
+    if(node_t* node = find(root, value)) return node->value;
     return false;
   }
 
-  optional<unsigned> find(const T& data) {
-    for(unsigned n = 0; n < objectsize; n++) if(pool[n] == &data) return {true, n};
-    return {false, 0u};
+  optional<const T&> find(const T& value) const {
+    if(node_t* node = find(root, value)) return node->value;
+    return false;
   }
 
-  template<typename... Args> set(Args&&... args) : pool(nullptr), poolsize(0), objectsize(0) {
-    construct(std::forward<Args>(args)...);
+  optional<T&> insert(const T& value) {
+    unsigned count = size();
+    node_t* v = insert(root, value);
+    root->red = 0;
+    if(size() == count) return false;
+    return {true, v->value};
   }
 
-  ~set() {
-    reset();
+  template<typename... Args> bool insert(const T& value, Args&&... args) {
+    bool result = insert(value);
+    insert(std::forward<Args>(args)...) | result;
+    return result;
   }
 
-  set& operator=(const set &source) {
-    if(&source == this) return *this;
-    if(pool) free(pool);
-    objectsize = source.objectsize;
-    poolsize = source.poolsize;
-    pool = (T**)malloc(sizeof(T*) * poolsize);
-    memcpy(pool, source.pool, sizeof(T*) * objectsize);
-    return *this;
+  bool remove(const T& value) {
+    unsigned count = size();
+    bool done = 0;
+    remove(root, &value, done);
+    if(root) root->red = 0;
+    return size() < count;
   }
 
-  set& operator=(const set &&source) {
-    if(&source == this) return *this;
-    if(pool) free(pool);
-    pool = source.pool;
-    poolsize = source.poolsize;
-    objectsize = source.objectsize;
-    source.pool = nullptr;
-    source.reset();
-    return *this;
+  template<typename... Args> bool remove(const T& value, Args&&... args) {
+    bool result = remove(value);
+    return remove(std::forward<Args>(args)...) | result;
   }
 
-  T& operator[](unsigned position) const {
-    if(position >= objectsize) throw exception_out_of_bounds();
-    return *pool[position];
-  }
+  struct base_iterator {
+    bool operator!=(const base_iterator& source) const { return position != source.position; }
 
-  struct iterator {
-    bool operator!=(const iterator &source) const { return position != source.position; }
-    T& operator*() { return source.operator[](position); }
-    iterator& operator++() { position++; return *this; }
-    iterator(const set &source, unsigned position) : source(source), position(position) {}
-  private:
-    const set &source;
+    base_iterator& operator++() {
+      if(++position >= source.size()) { position = source.size(); return *this; }
+
+      if(stack.last()->link[1]) {
+        stack.append(stack.last()->link[1]);
+        while(stack.last()->link[0]) stack.append(stack.last()->link[0]);
+      } else {
+        node_t* child;
+        do child = stack.take();
+        while(child == stack.last()->link[1]);
+      }
+
+      return *this;
+    }
+
+    base_iterator(const set& source, unsigned position) : source(source), position(position) {
+      node_t* node = source.root;
+      while(node) {
+        stack.append(node);
+        node = node->link[0];
+      }
+    }
+
+  protected:
+    const set& source;
     unsigned position;
+    vector<node_t*> stack;
+  };
+
+  struct iterator : base_iterator {
+    T& operator*() const { return base_iterator::stack.last()->value; }
+    iterator(const set& source, unsigned position) : base_iterator(source, position) {}
   };
 
   iterator begin() { return iterator(*this, 0); }
-  iterator end() { return iterator(*this, objectsize); }
-  const iterator begin() const { return iterator(*this, 0); }
-  const iterator end() const { return iterator(*this, objectsize); }
+  iterator end() { return iterator(*this, size()); }
+
+  struct const_iterator : base_iterator {
+    const T& operator*() const { return base_iterator::stack.last()->value; }
+    const_iterator(const set& source, unsigned position) : base_iterator(source, position) {}
+  };
+
+  const const_iterator begin() const { return const_iterator(*this, 0); }
+  const const_iterator end() const { return const_iterator(*this, size()); }
 
 private:
-  void construct() {}
-  void construct(const set &source) { operator=(source); }
-  void construct(const set &&source) { operator=(std::move(source)); }
-  template<typename... Args> void construct(T& data, Args&&... args) {
-    append(data);
-    construct(std::forward<Args>(args)...);
+  void reset(node_t*& node) {
+    if(!node) return;
+    if(node->link[0]) reset(node->link[0]);
+    if(node->link[1]) reset(node->link[1]);
+    delete node;
+    node = nullptr;
+  }
+
+  void copy(const set& source) {
+    reset();
+    copy(root, source.root);
+    nodes = source.nodes;
+  }
+
+  void copy(node_t*& target, const node_t* source) {
+    if(!source) return;
+    target = new node_t(source->value);
+    target->red = source->red;
+    copy(target->link[0], source->link[0]);
+    copy(target->link[1], source->link[1]);
+  }
+
+  void move(set&& source) {
+    root = source.root;
+    nodes = source.nodes;
+    source.root = nullptr;
+    source.nodes = 0;
+  }
+
+  node_t* find(node_t* node, const T& value) const {
+    if(node == nullptr) return nullptr;
+    if(node->value == value) return node;
+    return find(node->link[node->value < value], value);
+  }
+
+  bool red(node_t* node) const { return node && node->red; }
+  bool black(node_t* node) const { return !red(node); }
+
+  void rotate(node_t*& a, bool dir) {
+    node_t*& b = a->link[!dir];
+    node_t*& c = b->link[dir];
+    a->red = 1, b->red = 0;
+    std::swap(a, b);
+    std::swap(b, c);
+  }
+
+  void rotateTwice(node_t*& node, bool dir) {
+    rotate(node->link[!dir], !dir);
+    rotate(node, dir);
+  }
+
+  node_t* insert(node_t*& node, const T& value) {
+    if(!node) { nodes++; node = new node_t(value); return node; }
+    if(node->value == value) { node->value = value; return node; }  //prevent duplicate entries
+
+    bool dir = node->value < value;
+    node_t* v = insert(node->link[dir], value);
+    if(black(node->link[dir])) return v;
+
+    if(red(node->link[!dir])) {
+      node->red = 1;
+      node->link[0]->red = 0;
+      node->link[1]->red = 0;
+    } else if(red(node->link[dir]->link[dir])) {
+      rotate(node, !dir);
+    } else if(red(node->link[dir]->link[!dir])) {
+      rotateTwice(node, !dir);
+    }
+
+    return v;
+  }
+
+  void balance(node_t*& node, bool dir, bool& done) {
+    node_t* p = node;
+    node_t* s = node->link[!dir];
+    if(!s) return;
+
+    if(red(s)) {
+      rotate(node, dir);
+      s = p->link[!dir];
+    }
+
+    if(black(s->link[0]) && black(s->link[1])) {
+      if(red(p)) done = 1;
+      p->red = 0, s->red = 1;
+    } else {
+      bool save = p->red;
+      bool head = node == p;
+
+      if(red(s->link[!dir])) rotate(p, dir);
+      else rotateTwice(p, dir);
+
+      p->red = save;
+      p->link[0]->red = 0;
+      p->link[1]->red = 0;
+
+      if(head) node = p;
+      else node->link[dir] = p;
+
+      done = 1;
+    }
+  }
+
+  void remove(node_t*& node, const T* value, bool& done) {
+    if(!node) { done = 1; return; }
+
+    if(node->value == *value) {
+      if(!node->link[0] || !node->link[1]) {
+        node_t* save = node->link[!node->link[0]];
+
+        if(red(node)) done = 1;
+        else if(red(save)) save->red = 0, done = 1;
+
+        nodes--;
+        delete node;
+        node = save;
+        return;
+      } else {
+        node_t* heir = node->link[0];
+        while(heir->link[1]) heir = heir->link[1];
+        node->value = heir->value;
+        value = &heir->value;
+      }
+    }
+
+    bool dir = node->value < *value;
+    remove(node->link[dir], value, done);
+    if(!done) balance(node, dir, done);
   }
 };
 

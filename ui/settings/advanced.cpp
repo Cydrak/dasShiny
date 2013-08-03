@@ -19,9 +19,9 @@ AdvancedSettings::AdvancedSettings() {
   timingTitle.setFont(program->titleFont);
   timingTitle.setText("Synchronization");
   videoAdjust.name.setText("Video:");
-  videoAdjust.value.setText({config->timing.video});
+  videoAdjust.value.setText({uiConfig->timing.video});
   audioAdjust.name.setText("Audio:");
-  audioAdjust.value.setText({config->timing.audio});
+  audioAdjust.value.setText({uiConfig->timing.audio});
 
   driverTitle.setFont(program->titleFont);
   driverTitle.setText("Drivers");
@@ -49,22 +49,22 @@ AdvancedSettings::AdvancedSettings() {
 
   lstring list;
 
-  list.split(";", video.driver_list());
+  list.split(";", video.availableDrivers());
   for(unsigned n = 0; n < list.size(); n++) {
     videoDriver.append(list[n]);
-    if(list[n] == config->video.driver) videoDriver.setSelection(n);
+    if(list[n] == uiConfig->video.driver) videoDriver.setSelection(n);
   }
 
-  list.split(";", audio.driver_list());
+  list.split(";", audio.availableDrivers());
   for(unsigned n = 0; n < list.size(); n++) {
     audioDriver.append(list[n]);
-    if(list[n] == config->audio.driver) audioDriver.setSelection(n);
+    if(list[n] == uiConfig->audio.driver) audioDriver.setSelection(n);
   }
 
-  list.split(";", input.driver_list());
+  list.split(";", input.availableDrivers());
   for(unsigned n = 0; n < list.size(); n++) {
     inputDriver.append(list[n]);
-    if(list[n] == config->input.driver) inputDriver.setSelection(n);
+    if(list[n] == uiConfig->input.driver) inputDriver.setSelection(n);
   }
 
   append(timingTitle, {~0, 0}, 5);
@@ -93,14 +93,14 @@ AdvancedSettings::AdvancedSettings() {
   videoAdjust.value.onChange = [&] { videoAdjust.assign.setEnabled(true); };
   audioAdjust.value.onChange = [&] { audioAdjust.assign.setEnabled(true); };
   videoAdjust.assign.onActivate = [&] {
-    config->timing.video = atof(videoAdjust.value.text());
-    videoAdjust.value.setText({config->timing.video});
+    uiConfig->timing.video = atof(videoAdjust.value.text());
+    videoAdjust.value.setText({uiConfig->timing.video});
     videoAdjust.assign.setEnabled(false);
     utility->synchronizeDSP();
   };
   audioAdjust.assign.onActivate = [&] {
-    config->timing.audio = atof(audioAdjust.value.text());
-    audioAdjust.value.setText({config->timing.audio});
+    uiConfig->timing.audio = atof(audioAdjust.value.text());
+    audioAdjust.value.setText({uiConfig->timing.audio});
     audioAdjust.assign.setEnabled(false);
     utility->synchronizeDSP();
   };
@@ -108,9 +108,9 @@ AdvancedSettings::AdvancedSettings() {
   audioAdjust.analyze.onActivate = {&AdvancedSettings::analyzeAudioFrequency, this};
   videoAdjust.stop.onActivate = audioAdjust.stop.onActivate = [&] { analysis.stop = true; };
 
-  videoDriver.onChange = [&] { config->video.driver = videoDriver.text(); };
-  audioDriver.onChange = [&] { config->audio.driver = audioDriver.text(); };
-  inputDriver.onChange = [&] { config->input.driver = inputDriver.text(); };
+  videoDriver.onChange = [&] { uiConfig->video.driver = videoDriver.text(); };
+  audioDriver.onChange = [&] { uiConfig->audio.driver = audioDriver.text(); };
+  inputDriver.onChange = [&] { uiConfig->input.driver = inputDriver.text(); };
 
   libraryBrowse.onActivate = [&] {
     string path = BrowserWindow().setParent(*settings).setPath(userpath()).directory();
@@ -192,8 +192,8 @@ bool AdvancedSettings::analyzeTick(const string &type) {
 }
 
 void AdvancedSettings::analyzeStop() {
-  video.set(Video::Synchronize, config->video.synchronize);
-  audio.set(Audio::Synchronize, config->audio.synchronize);
+  video.set(Video::Synchronize, uiConfig->video.synchronize);
+  audio.set(Audio::Synchronize, uiConfig->audio.synchronize);
 
   settings->panelList.setEnabled(true);
   videoAdjust.analyze.setEnabled(true);

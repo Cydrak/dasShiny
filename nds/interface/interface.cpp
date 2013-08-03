@@ -32,7 +32,7 @@ string Interface::title() {
 
 string Interface::systemInfo(string path) {
   for(auto &sys : systemDoc.find("system")) {
-    if(sys.text().iwildcard("*lite*"))
+    if(sys.text().imatch("*lite*"))
       return sys[path].text();
   }
   return "";

@@ -17,7 +17,7 @@ struct Browser : Window {
   Browser();
 
 private:
-  configuration config;
+  Configuration::Document config;
   struct Folder {
     string extension;
     string path;
