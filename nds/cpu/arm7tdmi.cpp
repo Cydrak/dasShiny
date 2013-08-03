@@ -391,10 +391,10 @@ uint32 ARM7TDMI::readReg(uint32 addr, uint32 size) {
     return apu.regVoiceControl(addr>>4 & 15);
     
   case 0x500: return apu.regControl();
-  case 0x504: return apu.regBias();
-  case 0x508: return apu.regCaptureControl();
-  case 0x510: return apu.regCaptureDest(0);
-  case 0x518: return apu.regCaptureDest(1);
+  case 0x504: return apu.regOutputBias();
+  case 0x508: return apu.regChannelControl();
+  case 0x510: return apu.regChannelDest(0);
+  case 0x518: return apu.regChannelDest(1);
   
   }
   return CPUCore::readReg(addr, size);
@@ -480,12 +480,12 @@ void ARM7TDMI::writeReg(uint32 addr, uint32 size, uint32 data) {
     return apu.regVoiceLength(addr>>4 & 15, data, mask);
     
   case 0x500: return apu.regControl(data, mask);
-  case 0x504: return apu.regBias(data, mask);
-  case 0x508: return apu.regCaptureControl(data, mask);
-  case 0x510: return apu.regCaptureDest(0, data, mask);
-  case 0x514: return apu.regCaptureLength(0, data, mask);
-  case 0x518: return apu.regCaptureDest(1, data, mask);
-  case 0x51c: return apu.regCaptureLength(1, data, mask);
+  case 0x504: return apu.regOutputBias(data, mask);
+  case 0x508: return apu.regChannelControl(data, mask);
+  case 0x510: return apu.regChannelDest(0, data, mask);
+  case 0x514: return apu.regChannelLength(0, data, mask);
+  case 0x518: return apu.regChannelDest(1, data, mask);
+  case 0x51c: return apu.regChannelLength(1, data, mask);
   
   }
   return CPUCore::writeReg(addr, size, data);
