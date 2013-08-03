@@ -5,7 +5,7 @@ else
 endif
 
 rubyflags += $(foreach c,$(subst .,_,$(call strupper,$(ruby))),-D$c)
-rubyflags += $(if $(finstring .sdl,$(ruby)),`sdl-config --cflags`)
+rubyflags += $(if $(findstring .sdl,$(ruby)),`sdl-config --cflags`)
 
 rubylink =
 

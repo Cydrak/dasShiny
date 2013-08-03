@@ -167,6 +167,7 @@ bool VideoInterface::init() {
 
 void VideoInterface::term() {
   if(p) {
+    p->term();
     delete p;
     p = nullptr;
   }
@@ -304,6 +305,7 @@ bool AudioInterface::init() {
 
 void AudioInterface::term() {
   if(p) {
+    p->term();
     delete p;
     p = nullptr;
   }
@@ -410,6 +412,7 @@ bool InputInterface::init() {
 
 void InputInterface::term() {
   if(p) {
+    p->term();
     delete p;
     p = nullptr;
   }
