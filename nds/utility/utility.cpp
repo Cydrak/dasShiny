@@ -38,17 +38,23 @@ static string utf8fromUcs2(uint8_t *data) {
     code  = *data++ << 0;
     code += *data++ << 8;
     
-    if(code > 0x7ff)
+    if(code > 0x7ff) {
+      s.resize(len + 3);
       s[len++] = 0xe0|code>>12,
       s[len++] = 0x80|code>>6 & 0x3f,
       s[len++] = 0x80|code>>0 & 0x3f;
-    else if(code > 0x7f)
+    }
+    else if(code > 0x7f) {
+      s.resize(len + 2);
       s[len++] = 0xc0|code>>6,
       s[len++] = 0x80|code>>0 & 0x3f;
-    else if(code > 0)
+    }
+    else if(code > 0) {
+      s.resize(len + 1);
       s[len++] = 0x00|code;
+    }
     else {
-      s[len++] = 0; break;
+      s[len] = 0; break;
     }
   }
   return s;
@@ -364,7 +370,7 @@ bool importROMImage(string& container, string libraryPath, string sourcePath) {
   
   if(bannerValid) {
     // Not sure if this is UCS-2 or full UTF-16.
-    memcpy(bannerTextBuf, bannerData + 0x320, 0x100);  // UCS-2
+    memcpy(bannerTextBuf, bannerData + 0x320, 0x100);
   }
   lstring bannerText = string(utf8fromUcs2(bannerTextBuf)).split("\n");
   string bannerTitle = bannerText(0).trim();
