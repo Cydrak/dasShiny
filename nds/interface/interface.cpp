@@ -314,7 +314,7 @@ Interface::Interface() {
                                          | 1<<ID::Port::Slot2, "Empty"};
   gameCard  = Device{ID::Device::GameCard, 1<<ID::Port::Slot1, "Game Card"};
   gamePak   = Device{ID::Device::GamePak,  1<<ID::Port::Slot2, "Game Pak"};
-  builtIn   = Device{ID::Device::BuiltIn,  1<<ID::Port::BuiltIn, ""};
+  builtIn   = Device{ID::Device::BuiltIn,  1<<ID::Port::BuiltIn, "Built-in"};
   
     builtIn.input.append({ID::Buttons::A,           0, "A"});
     builtIn.input.append({ID::Buttons::B,           0, "B"});
@@ -331,8 +331,8 @@ Interface::Interface() {
     
     builtIn.input.append({ID::Sensors::X,           2, "Touch X"});
     builtIn.input.append({ID::Sensors::Y,           2, "Touch Y"});
-    builtIn.input.append({ID::Sensors::Touched,     0, "Touched (digital)"});
-    builtIn.input.append({ID::Sensors::Pressure,    2, "Pressure (analog)"});
+    builtIn.input.append({ID::Sensors::Touched,     0, "Touched"});
+    builtIn.input.append({ID::Sensors::Pressure,    2, "Pressure"});
     
     builtIn.order.append(6, 7, 5, 4, 2, 3, 1, 0, 10, 11, 9, 8, 12, 13, 14, 15);
   
