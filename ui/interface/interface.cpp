@@ -1,4 +1,4 @@
-#include "../ethos.hpp"
+#include "../ui.hpp"
 Interface *interface = nullptr;
 
 void Interface::loadRequest(unsigned id, const string &name, const string &type) {

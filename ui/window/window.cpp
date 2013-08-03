@@ -1,4 +1,4 @@
-#include "../ethos.hpp"
+#include "../ui.hpp"
 WindowManager *windowManager = nullptr;
 
 void WindowManager::append(Window *window, const string &name) {

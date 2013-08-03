@@ -1,4 +1,4 @@
-#include "../ethos.hpp"
+#include "../ui.hpp"
 #include <nds/utility/utility.hpp>
 
 Utility *utility = nullptr;

@@ -1,4 +1,4 @@
-#include "../ethos.hpp"
+#include "../ui.hpp"
 Configuration *config = nullptr;
 
 Configuration::Configuration() {

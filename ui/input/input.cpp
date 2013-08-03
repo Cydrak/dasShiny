@@ -1,4 +1,4 @@
-#include "../ethos.hpp"
+#include "../ui.hpp"
 #include "hotkeys.cpp"
 InputManager *inputManager = nullptr;
 

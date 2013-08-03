@@ -1,4 +1,4 @@
-#include "ethos.hpp"
+#include "ui.hpp"
 #include <nds/interface/interface.hpp>
 #include <nds/utility/utility.hpp>
 #include "resource/resource.cpp"

@@ -1,7 +1,7 @@
 include nds/Makefile
 name := dasShiny
 
-ui_objects := ui-ethos ui-configuration ui-interface ui-utility
+ui_objects := ui ui-configuration ui-interface ui-utility
 ui_objects += ui-input ui-window ui-general ui-settings
 ui_objects += phoenix ruby
 ui_objects += $(if $(call streq,$(platform),win),resource)
@@ -33,14 +33,14 @@ link += $(rubylink)
 objects := $(ui_objects) $(objects) data-resources
 objects := $(patsubst %,obj/%.o,$(objects))
 
-obj/ui-ethos.o: $(ui)/ethos.cpp $(call rwildcard,$(ui)/)
-obj/ui-configuration.o: $(ui)/configuration/configuration.cpp $(call rwildcard,$(ui)/)
-obj/ui-interface.o: $(ui)/interface/interface.cpp $(call rwildcard,$(ui)/)
-obj/ui-utility.o: $(ui)/utility/utility.cpp $(call rwildcard,$(ui)/)
-obj/ui-input.o: $(ui)/input/input.cpp $(call rwildcard,$(ui)/)
-obj/ui-window.o: $(ui)/window/window.cpp $(call rwildcard,$(ui)/)
-obj/ui-general.o: $(ui)/general/general.cpp $(call rwildcard,$(ui)/)
-obj/ui-settings.o: $(ui)/settings/settings.cpp $(call rwildcard,$(ui)/)
+obj/ui.o: ui/ui.cpp $(call rwildcard,ui/)
+obj/ui-configuration.o: ui/configuration/configuration.cpp $(call rwildcard,ui/)
+obj/ui-interface.o: ui/interface/interface.cpp $(call rwildcard,ui/)
+obj/ui-utility.o: ui/utility/utility.cpp $(call rwildcard,ui/)
+obj/ui-input.o: ui/input/input.cpp $(call rwildcard,ui/)
+obj/ui-window.o: ui/window/window.cpp $(call rwildcard,ui/)
+obj/ui-general.o: ui/general/general.cpp $(call rwildcard,ui/)
+obj/ui-settings.o: ui/settings/settings.cpp $(call rwildcard,ui/)
 
 obj/ruby.o: ruby/ruby.cpp $(call rwildcard,ruby/*)
 	$(call compile,$(rubyflags))
@@ -48,9 +48,9 @@ obj/ruby.o: ruby/ruby.cpp $(call rwildcard,ruby/*)
 obj/phoenix.o: phoenix/phoenix.cpp $(call rwildcard,phoenix/*)
 	$(call compile,$(phoenixflags))
 
-obj/resource.o: $(ui)/resource.rc
-#	windres --target=pe-i386 $(ui)/resource.rc obj/resource.o
-	windres $(resfmt) $(ui)/resource.rc obj/resource.o
+obj/resource.o: ui/resource.rc
+#	windres --target=pe-i386 ui/resource.rc obj/resource.o
+	windres $(resfmt) ui/resource.rc obj/resource.o
 
 
 # make gets all spaced-out at paths with spaces so don't try wildcarding the
@@ -74,7 +74,7 @@ else
 endif
 
 resource:
-	sourcery $(ui)/resource/resource.xml $(ui)/resource/resource.cpp $(ui)/resource/resource.hpp
+	sourcery ui/resource/resource.xml ui/resource/resource.cpp ui/resource/resource.hpp
 
 install:
 ifeq ($(USER),root)

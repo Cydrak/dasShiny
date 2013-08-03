@@ -1,4 +1,4 @@
-#include "../ethos.hpp"
+#include "../ui.hpp"
 #include "output.cpp"
 #include "input.cpp"
 #include "hotkey.cpp"

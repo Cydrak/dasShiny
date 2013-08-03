@@ -66,8 +66,6 @@ else
   unknown_platform: help;
 endif
 
-ui := target-$(target)
-
 # implicit rules
 compile = \
   $(strip \
@@ -86,7 +84,7 @@ all: build;
 
 obj/libco.o: libco/libco.c libco/*
 
-include $(ui)/Makefile
+include ui/Makefile
 flags := $(flags) $(foreach o,$(call strupper,$(options)),-D$o)
 
 # targets
