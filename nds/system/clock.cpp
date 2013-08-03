@@ -37,13 +37,17 @@ uint4 Clock::io(uint4 pins) {
   uint1 clk    = pins>>1;
   uint1 cs     = pins>>2;
   
-  if(cs != lastCs && !(lastCs = cs)) {
+  // On CS rising edge, prepare for a new command.
+  if(cs != lastCs && (lastCs = cs)) {
     command = nbits = 0;
     output = false;
     return 0xf;
   }
-  // Wait for falling CLK edge with CS high..
-  if(clk != lastClk && !(lastClk = clk)) {
+  // While CS low, tri-state the data pin.
+  if(!cs) return 0xf;
+  
+  // While CS high, wait for rising CLK edge..
+  if(clk != lastClk && (lastClk = clk)) {
     // Rotate data through the buffer
     dataOut = buffer;
     buffer  = dataIn<<7 | buffer>>1;
@@ -108,6 +112,10 @@ void Clock::dateTime() {
 
 void Clock::alarmTime(unsigned no) {
   if(index >= 3) return;
+  
+  // Selectable frequency setting shares alarm 1's minute register.
+  if(no == 0 && (~status2 & int1Mode & 2)) index = 2;
+  
   if(output) buffer = alarm[no].setting[index++];
   else       alarm[no].setting[index++] = buffer;
 }
@@ -125,8 +133,7 @@ bool Clock::incBCD(uint8& val, uint8 first, uint8 last) {
 void Clock::tick() {
   bool previously = intr[0] | intr[1];
   
-  if(++counter == 0)
-    secondsTickPending = true;
+  if(++counter == 0) secondsTickPending = true;
   
   // Ticks can be held for up to 500 ms while reading the time.
   if(secondsTickPending && (hold == false || counter >= 2*16384)) {
@@ -163,10 +170,8 @@ void Clock::tick() {
   
   bool interrupt = intr[0] | intr[1];
   
-  if(arm7.sio.irq && interrupt && previously == false) {
-    //arm7.raiseIrq(CPUCore::irqClock);
+  if(arm7.sio.irq && interrupt && previously == false)
     arm7.interrupt.flags |= CPUCore::irqClock;
-  }
 }
 
 void Clock::tickSecond() {
