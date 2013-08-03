@@ -1,8 +1,11 @@
 database.bml
 firmware
+build*/*
 *.zip
 *.exe
 *.dll
+*.dylib
+*.so
 *.res
 *.[doa]
 *.log
