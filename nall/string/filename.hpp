@@ -8,7 +8,7 @@ namespace nall {
 inline string dir(string name) {
   for(signed i = name.length(); i >= 0; i--) {
     if(name[i] == '/' || name[i] == '\\') {
-      name[i + 1] = 0;
+      name.resize(i + 1);
       break;
     }
     if(i == 0) name = "./";
@@ -41,7 +41,7 @@ inline string parentdir(string name) {
     }
   }
   if(last + 1 == length) last = prev;  //if name ends in slash; use previous slash
-  if(paths > 1) name[last + 1] = 0;
+  if(paths > 1) name.resize(last + 1);
   return name;
 }
 
@@ -50,7 +50,7 @@ inline string basename(string name) {
   for(signed i = name.length(); i >= 0; i--) {
     if(name[i] == '/' || name[i] == '\\') break;  //file has no extension
     if(name[i] == '.') {
-      name[i] = 0;
+      name.resize(i);
       break;
     }
   }
